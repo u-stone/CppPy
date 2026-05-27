@@ -49,6 +49,97 @@ def _run(cmd, **kwargs):
     return subprocess.run(cmd, check=False, **kwargs)
 
 
+# VS generator detection priority. Maps VS year to CMake generator name and
+# the vswhere productLineVersion string used for detection.
+_VS_CANDIDATES = [
+    ("2026", "Visual Studio 18 2026"),
+    ("2022", "Visual Studio 17 2022"),
+    ("2019", "Visual Studio 16 2019"),
+]
+
+
+def _find_vs_generator():
+    """Find the best available Visual Studio installation on Windows.
+
+    Uses vswhere.exe (bundled with the VS installer) for reliable detection.
+    Falls back to checking well-known install directories.
+
+    Returns:
+        (generator_name, is_multi_config) if VS is found, otherwise
+        (None, False).  Priority: 2026 > 2022 > 2019.
+    """
+    if platform.system() != "Windows":
+        return None, False
+
+    vswhere = os.path.join(
+        os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
+        "Microsoft Visual Studio", "Installer", "vswhere.exe",
+    )
+
+    found_versions = set()
+
+    # Primary: vswhere.exe
+    if os.path.isfile(vswhere):
+        try:
+            output = subprocess.check_output(
+                [vswhere, "-products", "*",
+                 "-property", "catalog_productLineVersion"],
+                text=True,
+            )
+            for line in output.strip().splitlines():
+                ver = line.strip()
+                if ver:
+                    found_versions.add(ver)
+        except Exception:
+            pass
+
+    # Fallback: check install directories for each candidate
+    if not found_versions:
+        prog_files = os.environ.get("ProgramFiles", "C:\\Program Files")
+        prog_files_x86 = os.environ.get(
+            "ProgramFiles(x86)", "C:\\Program Files (x86)"
+        )
+        for year, _gen in _VS_CANDIDATES:
+            # VS 2019 and later use %ProgramFiles% regardless of arch
+            base = prog_files if year >= "2022" else prog_files_x86
+            year_dir = os.path.join(base, "Microsoft Visual Studio", year)
+            if os.path.isdir(year_dir):
+                for edition in ("Community", "Professional", "Enterprise"):
+                    devenv = os.path.join(
+                        year_dir, edition,
+                        "Common7", "IDE", "devenv.exe",
+                    )
+                    if os.path.isfile(devenv):
+                        found_versions.add(year)
+                        break
+                if year in found_versions:
+                    break
+
+    # Pick the highest-priority match
+    for year, gen_name in _VS_CANDIDATES:
+        if year in found_versions:
+            print(f"[setup] Detected {gen_name} ({year})")
+            return gen_name, True  # VS generators are multi-config
+
+    return None, False
+
+
+def _is_multi_config_generator():
+    """Check whether the current build tree uses a multi-config generator."""
+    cache = os.path.join(BUILD_DIR, "CMakeCache.txt")
+    if not os.path.isfile(cache):
+        return False
+    try:
+        with open(cache, "r") as f:
+            for line in f:
+                if line.startswith("CMAKE_GENERATOR:INTERNAL="):
+                    gen = line.split("=", 1)[1].strip()
+                    return gen.startswith("Visual Studio") or "Xcode" in gen
+    except Exception:
+        pass
+    return False
+
+
 def cmd_setup(args):
     """Create virtualenv, run cmake configure, install Python deps."""
     print("[setup] Creating virtualenv...")
@@ -72,15 +163,39 @@ def cmd_setup(args):
     print("[setup] Running cmake configure...")
     os.makedirs(BUILD_DIR, exist_ok=True)
 
+    # Resolve generator:
+    #  1. Explicit --generator flag (e.g. --generator Ninja)
+    #  2. Auto-detect Visual Studio on Windows
+    #  3. Fall back to Ninja
+    generator = None
+    is_multi_config = False  # VS generators are multi-config
+    if args.generator:
+        generator = args.generator
+        is_multi_config = generator.startswith("Visual Studio")
+    elif platform.system() == "Windows":
+        vs_gen, is_multi_config = _find_vs_generator()
+        if vs_gen:
+            generator = vs_gen
+    if not generator:
+        generator = "Ninja"
+        is_multi_config = False
+
     cmake_args = [
         "cmake", "-B", BUILD_DIR, "-S", PROJECT_ROOT,
-        "-G", "Ninja",
-        "-DCMAKE_C_COMPILER=clang",
-        "-DCMAKE_CXX_COMPILER=clang++",
-        "-DCMAKE_BUILD_TYPE=Release",
+        "-G", generator,
         f"-DPython3_EXECUTABLE={python}",
         f"-DPython_EXECUTABLE={python}",
     ]
+
+    # Single-config generators (Ninja, Make) need CMAKE_BUILD_TYPE.
+    # Multi-config generators (VS, Xcode) pick the config at build time.
+    if not is_multi_config:
+        cmake_args += [
+            "-DCMAKE_C_COMPILER=clang",
+            "-DCMAKE_CXX_COMPILER=clang++",
+            "-DCMAKE_BUILD_TYPE=Release",
+        ]
+
     # Toggle individual schemes
     scheme_flags = {
         "pybind11": "BUILD_PYBIND11",
@@ -109,8 +224,14 @@ def cmd_build(args):
               file=sys.stderr)
         sys.exit(1)
 
+    # Detect whether this is a multi-config generator (VS, Xcode)
+    is_multi_config = _is_multi_config_generator()
+
     print("[build] Building...")
     build_args = ["cmake", "--build", BUILD_DIR]
+    if is_multi_config:
+        config = getattr(args, "config", None) or "Release"
+        build_args += ["--config", config]
     if args.parallel:
         build_args += ["--parallel", str(args.parallel)]
 
@@ -361,12 +482,23 @@ def main():
     p_setup = sub.add_parser("setup", help="Configure CMake and install deps")
     p_setup.add_argument("--scheme", choices=ALL_SCHEMES,
                          help="Only setup for a specific scheme")
+    p_setup.add_argument(
+        "--generator",
+        help="CMake generator (e.g. Ninja, 'Visual Studio 17 2022'). "
+             "On Windows, auto-detects the best VS version by default.",
+    )
 
     p_build = sub.add_parser("build", help="Build the project")
     p_build.add_argument("--scheme", choices=ALL_SCHEMES,
                          help="Only build a specific scheme")
     p_build.add_argument("--parallel", type=int, default=0,
                          help="Number of parallel build jobs")
+    p_build.add_argument(
+        "--config", default="Release",
+        choices=["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
+        help="Build configuration (for multi-config generators). "
+             "Default: Release.",
+    )
 
     p_run = sub.add_parser("run", help="Run example scripts")
     p_run.add_argument("--scheme", choices=ALL_SCHEMES,
