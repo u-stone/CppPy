@@ -22,8 +22,8 @@ set_target_properties(engine_c PROPERTIES
 add_custom_command(TARGET engine_c POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/python/cffi_build.py"
-    "${CMAKE_BINARY_DIR}/bindings_output/cffi/"
+    "$<TARGET_FILE_DIR:engine_c>/"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/python/cffi_bridge.py"
-    "${CMAKE_BINARY_DIR}/bindings_output/cffi/"
+    "$<TARGET_FILE_DIR:engine_c>/"
 )
