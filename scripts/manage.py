@@ -242,6 +242,57 @@ def cmd_build(args):
     print("[build] Build OK")
 
 
+def _find_module_dir(scheme):
+    """Return the directory containing the built Python module for a scheme.
+
+    With single-config generators (Ninja, Make) the module lands directly in
+    bindings_output/<scheme>/.  Multi-config generators (VS, Xcode) append a
+    configuration subdirectory (Debug, Release, …).  This helper probes for
+    the most likely candidate so PYTHONPATH is set correctly.
+    """
+    base = os.path.join(BINDINGS_OUTPUT, scheme)
+    if not os.path.isdir(base):
+        return base
+
+    # If the base directory itself contains a .pyd / .dll / .so, use it.
+    for entry in os.listdir(base):
+        if entry.endswith((".pyd", ".dll", ".so")):
+            return base
+        # Also accept the SWIG-generated .py wrapper (engine_swig.py).
+        if entry.endswith(".py") and scheme == "swig":
+            return base
+
+    # Multi-config: search one level down for the most recently modified
+    # directory that contains a module.
+    candidates = []
+    try:
+        for entry in os.listdir(base):
+            sub = os.path.join(base, entry)
+            if not os.path.isdir(sub):
+                continue
+            for f in os.listdir(sub):
+                if f.endswith((".pyd", ".dll", ".so")):
+                    candidates.append((os.path.getmtime(sub), sub))
+                    break
+                if f.endswith(".py") and scheme == "swig":
+                    candidates.append((os.path.getmtime(sub), sub))
+                    break
+    except OSError:
+        pass
+
+    if candidates:
+        candidates.sort(reverse=True)
+        return candidates[0][1]
+
+    # Fallback: pick a config dir that exists (Release > Debug)
+    for cfg in ("Release", "Debug", "RelWithDebInfo", "MinSizeRel"):
+        cfg_dir = os.path.join(base, cfg)
+        if os.path.isdir(cfg_dir):
+            return cfg_dir
+
+    return base
+
+
 def cmd_run(args):
     """Run example scripts for all or a specific scheme."""
     schemes = [args.scheme] if args.scheme else ALL_SCHEMES
@@ -254,9 +305,10 @@ def cmd_run(args):
             results[scheme] = "SKIP (no example)"
             continue
 
+        module_dir = _find_module_dir(scheme)
         print(f"\n[run] === {scheme} ===")
         env = os.environ.copy()
-        env["PYTHONPATH"] = os.path.join(BINDINGS_OUTPUT, scheme)
+        env["PYTHONPATH"] = module_dir
 
         result = _run([python, example], env=env)
         if result.returncode == 0:
