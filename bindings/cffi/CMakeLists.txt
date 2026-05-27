@@ -1,5 +1,9 @@
 add_library(engine_c SHARED src/cffi_c_impl.cpp)
 
+target_sources(engine_c PRIVATE
+  ${CMAKE_SOURCE_DIR}/engine/include/engine/c_api.h
+)
+
 target_include_directories(engine_c PRIVATE ${CMAKE_SOURCE_DIR}/engine/include)
 
 target_link_libraries(engine_c PRIVATE engine Threads::Threads)

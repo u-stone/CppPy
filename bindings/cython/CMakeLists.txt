@@ -19,6 +19,12 @@ add_library(engine_cython MODULE
   src/cython_cpp_wrap.cpp
 )
 
+target_sources(engine_cython PRIVATE
+  ${CMAKE_SOURCE_DIR}/engine/include/engine/c_api.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/engine_cython.pxd
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/engine_cython.pyx
+)
+
 target_include_directories(engine_cython PRIVATE
   ${CMAKE_SOURCE_DIR}/engine/include
   ${Python3_INCLUDE_DIRS}

@@ -13,6 +13,10 @@ swig_add_library(engine_swig
   SOURCES src/engine.i
 )
 
+target_sources(${SWIG_MODULE_engine_swig_name} PRIVATE
+  ${CMAKE_SOURCE_DIR}/engine/include/engine/c_api.h
+)
+
 target_link_libraries(engine_swig PRIVATE engine ${Python3_LIBRARIES})
 
 target_include_directories(engine_swig PRIVATE
