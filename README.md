@@ -70,6 +70,22 @@ CppPy/
 - **C API** (`c_api.h`): Pure `extern "C"` functions with opaque `void*` handles. ABI-stable. Used by cffi/ctypes and SWIG.
 - **C++ Template API** (`cpp_api.h`): Templates, `std::vector`, `std::optional`, `std::shared_ptr`. Used by pybind11 and nanobind.
 
+## Documentation
+
+Each binding scheme has a detailed technical document in `docs/`:
+
+| Scheme | Document | Topics Covered |
+|--------|----------|----------------|
+| pybind11 | [docs/pybind11.md](docs/pybind11.md) | STL auto-conversion, GIL management, return value policies |
+| nanobind | [docs/nanobind.md](docs/nanobind.md) | Smaller binaries, faster compilation, auto GIL, migration from pybind11 |
+| SWIG | [docs/swig.md](docs/swig.md) | `.i` interface files, typemaps, multi-language support, bytes/str handling |
+| Cython | [docs/cython.md](docs/cython.md) | `.pxd`/`.pyx` workflow, `cdef class`, manual lifecycle, near-native performance |
+| CFFI + C API | [docs/cffi.md](docs/cffi.md) | Pure C ABI, ctypes/CDLL, shared library distribution, cross-scheme comparison |
+
+Each document covers: underlying mechanism, dependency setup, code walkthrough with annotations, implementation complexity analysis, ease-of-use evaluation, and use case recommendations.
+
+中文文档请参阅 [README.zh.md](README.zh.md)。
+
 ## License
 
 MIT
