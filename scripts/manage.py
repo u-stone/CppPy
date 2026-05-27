@@ -5,9 +5,12 @@
 import argparse
 import os
 import platform
+import shutil
 import subprocess
 import sys
+import urllib.request
 import venv
+import zipfile
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD_DIR = os.path.join(PROJECT_ROOT, "build")
@@ -61,9 +64,9 @@ def cmd_setup(args):
     for req in PYTHON_REQUIREMENTS:
         _run([python, "-m", "pip", "install", req])
 
-    # Clone 3rdparty C++ dependencies (skipped if already present)
+    # Clone/download 3rdparty C++ dependencies (skipped if already present)
     print("[setup] Checking 3rdparty dependencies...")
-    _setup_3rdparty()
+    _setup_3rdparty(args.scheme)
 
     # CMake configure
     print("[setup] Running cmake configure...")
@@ -230,11 +233,93 @@ THIRDPARTY_DEPS = {
     },
 }
 
+# SWIG pre-built binary (swigwin) for Windows.
+# On Linux/macOS, SWIG is expected to be installed via the system package manager.
+SWIG_WIN_URL = (
+    "https://sourceforge.net/projects/swig/files/swigwin/swigwin-4.4.0/"
+    "swigwin-4.4.0.zip/download"
+)
+SWIG_INSTALL_DIR = os.path.join(THIRDPARTY_DIR, "swig-install")
 
-def _setup_3rdparty():
-    """Clone third-party C++ libraries into 3rdparty/ (skip if exists)."""
+
+def _setup_swig():
+    """Download and extract the swigwin pre-built binary (Windows only).
+
+    On other platforms, SWIG is expected to be available on PATH via the
+    system package manager (apt, brew, dnf, pacman, etc.).
+    """
+    swig_exe = os.path.join(SWIG_INSTALL_DIR, "swig.exe")
+    if os.path.isfile(swig_exe):
+        print("  [3rdparty] swig: already present, skipping")
+        return
+
+    if platform.system() != "Windows":
+        print("  [3rdparty] swig: not Windows — install SWIG via your "
+              "system package manager (apt install swig / brew install swig)")
+        return
+
+    zip_path = os.path.join(THIRDPARTY_DIR, "swigwin.zip")
+
+    # Download
+    print(f"  [3rdparty] swig: downloading swigwin-4.4.0.zip (~12 MB) ...")
+    try:
+        urllib.request.urlretrieve(SWIG_WIN_URL, zip_path)
+    except Exception as e:
+        print(f"  [3rdparty] swig: download FAILED — {e}", file=sys.stderr)
+        print("  [3rdparty] swig: install SWIG manually to "
+              f"{SWIG_INSTALL_DIR}", file=sys.stderr)
+        return
+    print("  [3rdparty] swig: download OK")
+
+    # Extract — the zip contains a top-level swigwin-4.4.0/ directory
+    print(f"  [3rdparty] swig: extracting to {SWIG_INSTALL_DIR} ...")
+    os.makedirs(SWIG_INSTALL_DIR, exist_ok=True)
+    try:
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            # Strip the top-level directory prefix from paths
+            for member in zf.infolist():
+                # e.g. "swigwin-4.4.0/swig.exe" → "swig.exe"
+                rel = member.filename.split("/", 1)
+                target_name = rel[1] if len(rel) > 1 else rel[0]
+                if not target_name:
+                    continue
+                target_path = os.path.join(SWIG_INSTALL_DIR, target_name)
+                if member.is_dir():
+                    os.makedirs(target_path, exist_ok=True)
+                else:
+                    with zf.open(member) as src, open(target_path, "wb") as dst:
+                        shutil.copyfileobj(src, dst)
+    except Exception as e:
+        print(f"  [3rdparty] swig: extraction FAILED — {e}", file=sys.stderr)
+        return
+
+    # Clean up zip and any leftover source directory
+    os.remove(zip_path)
+    old_src = os.path.join(THIRDPARTY_DIR, "swig-4.4.1")
+    if os.path.isdir(old_src):
+        shutil.rmtree(old_src, ignore_errors=True)
+
+    if os.path.isfile(swig_exe):
+        print("  [3rdparty] swig: setup OK")
+    else:
+        print("  [3rdparty] swig: extraction completed but swig.exe not "
+              "found — check the archive layout", file=sys.stderr)
+
+
+def _setup_3rdparty(scheme=None):
+    """Clone/download third-party libraries into 3rdparty/ (skip if exists).
+
+    Args:
+        scheme: If set, only prepare dependencies for the given binding scheme.
+                If None, prepare everything.
+    """
     os.makedirs(THIRDPARTY_DIR, exist_ok=True)
+
+    # Git-cloned dependencies (pybind11, nanobind)
+    need_all = scheme is None
     for name, info in THIRDPARTY_DEPS.items():
+        if not need_all and name != scheme:
+            continue
         dest = os.path.join(THIRDPARTY_DIR, name)
         if os.path.exists(os.path.join(dest, "CMakeLists.txt")):
             print(f"  [3rdparty] {name}: already present, skipping")
@@ -249,6 +334,10 @@ def _setup_3rdparty():
             print(f"  [3rdparty] {name}: clone FAILED", file=sys.stderr)
         else:
             print(f"  [3rdparty] {name}: clone OK")
+
+    # SWIG pre-built binary (Windows only)
+    if need_all or scheme == "swig":
+        _setup_swig()
 
 
 def _find_files(root, extensions, exclude=None):
