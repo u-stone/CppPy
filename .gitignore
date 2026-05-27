@@ -1,0 +1,30 @@
+# Build output
+build/
+
+# 3rdparty dependencies (managed by manage.py setup)
+3rdparty/pybind11/
+3rdparty/nanobind/
+3rdparty/swig-4.4.1/
+3rdparty/swig-install/
+3rdparty/swig-win.zip
+
+# Claude Code local state
+.remember/
+.claude/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db

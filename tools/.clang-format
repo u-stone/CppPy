@@ -1,0 +1,14 @@
+# tools/.clang-format — Google C++ style
+BasedOnStyle: Google
+Language: Cpp
+Standard: c++17
+ColumnLimit: 100
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+SortIncludes: true
+IncludeBlocks: Regroup
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+BreakBeforeBraces: Attach
