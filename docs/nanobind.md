@@ -309,19 +309,46 @@ engine.shutdown()
 4. **不向后兼容 pybind11**：虽然迁移成本低，但需要从代码到构建系统全面更新
 5. **成熟度**：部分高级特性（如自定义类型转换器）的 API 仍可能变更
 
-## 编译与运行验证
+## 编译、安装与使用
+
+### 编译
 
 ```bash
-# 完整构建流程
 cd CppPy
-python scripts/manage.py setup   # 自动 git clone nanobind 到 3rdparty/
-python scripts/manage.py build   # 编译所有方案（含 nanobind）
-python scripts/manage.py run --scheme nanobind  # 运行 nanobind demo
+python scripts/manage.py setup              # 自动 clone nanobind 到 3rdparty/
+python scripts/manage.py build              # 编译所有方案（或 --scheme nanobind）
+```
 
-# 或手动构建
-cd build
-cmake --build . --target engine_nanobind
-PYTHONPATH="dist/Debug" python ../examples/nanobind/demo.py
+编译产物位于 `dist/<Config>/engine_nanobind/`：
+
+```
+dist/Debug/engine_nanobind/
+├── __init__.py                  # from ._core import ...
+├── _core.cp312-win_amd64.pyd    # 内部 C 扩展
+├── _core.pyi                    # nanobind 原生存根（质量最优）
+└── py.typed
+```
+
+### 安装与使用
+
+将 `dist/<Config>/` 加入 `PYTHONPATH` 后即可导入：
+
+```bash
+export PYTHONPATH="$(pwd)/dist/Debug"    # Linux / macOS
+$env:PYTHONPATH="$(Get-Location)\dist\Debug"  # Windows PowerShell
+```
+
+```python
+import engine_nanobind
+engine = engine_nanobind.Engine()
+engine.init('{}')
+```
+
+### 打包分发
+
+```bash
+python scripts/manage.py package --scheme nanobind --config Release
+# 产物: dist/engine_nanobind-0.1.0.zip
 ```
 
 ## 物理文件与 Python 类型存根 (`.pyi`)

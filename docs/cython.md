@@ -380,19 +380,45 @@ Python 端的 API 体验非常自然——从用户角度看，`engine_cython.En
 5. **手动生命周期管理**：`__dealloc__` 中手动释放资源，容易出错
 6. **工具支持有限**：IDE 对 `.pxd`/`.pyx` 文件的代码导航和自动完成支持不如普通 Python/C++
 
-## 编译与运行验证
+## 编译、安装与使用
+
+### 编译
 
 ```bash
-# 完整构建流程
 cd CppPy
 python scripts/manage.py setup
-python scripts/manage.py build
-python scripts/manage.py run --scheme cython
+python scripts/manage.py build              # 或 --scheme cython
+```
 
-# 或手动构建
-cd build
-cmake --build . --target engine_cython
-PYTHONPATH="dist/Debug" python ../examples/cython/demo.py
+编译产物位于 `dist/<Config>/engine_cython/`：
+
+```
+dist/Debug/engine_cython/
+├── __init__.py                  # from ._core import Engine, Scene, ...
+├── _core.pyd                    # Cython 编译的 C 扩展
+├── _core.pyi                    # 类型存根（stubgen-pyx 生成）
+└── py.typed
+```
+
+### 安装与使用
+
+将 `dist/<Config>/` 加入 `PYTHONPATH`：
+
+```bash
+export PYTHONPATH="$(pwd)/dist/Debug"
+```
+
+```python
+import engine_cython
+engine = engine_cython.Engine()
+engine.init('{}')
+```
+
+### 打包分发
+
+```bash
+python scripts/manage.py package --scheme cython --config Release
+# 产物: dist/engine_cython-0.1.0.zip
 ```
 
 ## 物理文件与 Python 类型存根 (`.pyi`)

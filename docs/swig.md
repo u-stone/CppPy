@@ -394,19 +394,47 @@ class EngineWrapper:
 5. **构建时间**：SWIG 预处理 + 生成的代码编译比直接编写的绑定稍长
 6. **调试困难**：错误可能出现在 `.i` 文件、生成的 `.cxx` 文件或 Python 层，排查链较长
 
-## 编译与运行验证
+## 编译、安装与使用
+
+### 编译
 
 ```bash
-# 完整构建流程
 cd CppPy
-python scripts/manage.py setup   # 注意：SWIG 需要单独安装到 3rdparty/swig-install/
-python scripts/manage.py build
-python scripts/manage.py run --scheme swig
+python scripts/manage.py setup              # 自动下载 swigwin 到 3rdparty/swig-install/
+python scripts/manage.py build              # 编译所有方案（或 --scheme swig）
+```
 
-# 或手动构建
-cd build
-cmake --build . --target engine_swig
-PYTHONPATH="dist/Debug" python ../examples/swig/demo.py
+编译产物位于 `dist/<Config>/engine_swig/`：
+
+```
+dist/Debug/engine_swig/
+├── __init__.py                  # SWIG 生成的 Python 包装器（可直接阅读）
+├── _engine_swig.pyd             # SWIG 编译的 C 扩展
+└── py.typed
+```
+
+### 安装与使用
+
+将 `dist/<Config>/` 加入 `PYTHONPATH` 后即可导入：
+
+```bash
+export PYTHONPATH="$(pwd)/dist/Debug"
+```
+
+```python
+import engine_swig
+# SWIG 包装的是纯 C API，函数名直接对应 c_api.h
+engine = engine_swig.engine_create_and_init('{"app": "demo"}')
+# ...
+```
+
+注意：SWIG 4.x 默认将 `char*` 映射为 Python `bytes`，字符串参数需要 `.encode('utf-8')`。
+
+### 打包分发
+
+```bash
+python scripts/manage.py package --scheme swig --config Release
+# 产物: dist/engine_swig-0.1.0.zip
 ```
 
 ## 物理文件与 API 文档

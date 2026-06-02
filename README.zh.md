@@ -15,18 +15,61 @@
 ## 快速开始
 
 ```bash
-# 1. 初始化（创建虚拟环境，运行 cmake）
+# 1. 初始化（创建虚拟环境，安装依赖，配置 CMake）
 python scripts/manage.py setup
 
-# 2. 构建所有绑定方案
+# 2. 编译所有绑定方案（C++ 引擎 + 5 个 Python 包 → dist/）
 python scripts/manage.py build
 
-# 3. 运行所有示例
+# 3. 运行所有示例（自动设置 PYTHONPATH 指向 dist/）
 python scripts/manage.py run
 
 # 4. 代码检查
 python scripts/manage.py lint
 python scripts/manage.py tidy
+```
+
+编译完成后，`dist/Debug/`（或 `dist/Release/`）包含 5 个自包含的 Python 包：
+
+```
+dist/Debug/
+├── engine_pybind/      # import engine_pybind
+├── engine_nanobind/    # import engine_nanobind
+├── engine_swig/        # import engine_swig
+├── engine_cython/      # import engine_cython
+└── engine_cffi/        # import engine_cffi
+```
+
+每个包都是标准的 Python 模块 — `__init__.py` 公开接口 + 内部 `_core` C 扩展 + `.pyi` 类型存根。
+
+## 作为库使用
+
+```bash
+# 无需 manage.py — 只需设置 PYTHONPATH 指向 dist/<Config>/
+# Linux / macOS:
+PYTHONPATH=dist/Debug python
+
+# Windows PowerShell:
+$env:PYTHONPATH="dist\Debug"
+python
+```
+
+```python
+>>> import engine_pybind
+>>> engine = engine_pybind.Engine()
+>>> engine.init('{"app":"demo"}')
+>>> engine.update(0.016)
+>>> engine.shutdown()
+```
+
+## 打包分发
+
+```bash
+# 将所有或单个方案打包为 .zip 压缩包
+python scripts/manage.py package --config Release
+python scripts/manage.py package --scheme pybind11 --config Release
+
+# 产物: dist/engine_pybind-0.1.0.zip, dist/engine_nanobind-0.1.0.zip, ...
 ```
 
 ## 构建单个方案

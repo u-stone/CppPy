@@ -15,18 +15,57 @@ A technical verification project comparing 5 approaches for bridging a C++17 gam
 ## Quick Start
 
 ```bash
-# 1. Setup (create venv, run cmake)
+# 1. Setup (create venv, install deps, configure CMake)
 python scripts/manage.py setup
 
-# 2. Build all bindings
+# 2. Build all bindings (compiles C++ engine + 5 Python packages to dist/)
 python scripts/manage.py build
 
-# 3. Run all examples
+# 3. Run all demos (automatically sets PYTHONPATH to dist/)
 python scripts/manage.py run
 
 # 4. Lint & tidy
 python scripts/manage.py lint
 python scripts/manage.py tidy
+```
+
+After building, `dist/Debug/` (or `dist/Release/`) contains 5 self-contained Python packages:
+
+```
+dist/Debug/
+├── engine_pybind/      # import engine_pybind
+├── engine_nanobind/    # import engine_nanobind
+├── engine_swig/        # import engine_swig
+├── engine_cython/      # import engine_cython
+└── engine_cffi/        # import engine_cffi
+```
+
+Each package is a native Python module — `__init__.py` + internal `_core` C extension + `.pyi` stubs.
+
+## Using as a Library
+
+```bash
+# Without manage.py — just set PYTHONPATH to dist/<Config>/
+PYTHONPATH=dist/Debug python       # Linux / macOS
+$env:PYTHONPATH="dist\Debug"; python  # Windows PowerShell
+```
+
+```python
+>>> import engine_pybind
+>>> engine = engine_pybind.Engine()
+>>> engine.init('{"app":"demo"}')
+>>> engine.update(0.016)
+>>> engine.shutdown()
+```
+
+## Packaging for Distribution
+
+```bash
+# Package all or a single scheme as .zip archives
+python scripts/manage.py package --config Release
+python scripts/manage.py package --scheme pybind11 --config Release
+
+# Output: dist/engine_pybind-0.1.0.zip, dist/engine_nanobind-0.1.0.zip, ...
 ```
 
 ## Build a Single Scheme

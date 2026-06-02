@@ -281,19 +281,60 @@ print(isinstance(t, engine_pybind.Transform))  # True
 4. **C++ 模板边界**：对于高度模板化的 C++ API，每个实例化都需要单独注册
 5. **继承深度限制**：多重继承和虚继承的支持不够完善
 
-## 编译与运行验证
+## 编译、安装与使用
+
+### 编译
 
 ```bash
-# 完整构建流程
 cd CppPy
-python scripts/manage.py setup   # 安装依赖 + cmake configure
-python scripts/manage.py build   # cmake --build
-python scripts/manage.py run --scheme pybind11  # 运行 pybind11 demo
+python scripts/manage.py setup              # 创建 venv，安装依赖，cmake 配置
+python scripts/manage.py build              # 编译所有方案（或 --scheme pybind11 单独编译）
+```
 
-# 或手动执行
-cd build
-cmake --build . --target engine_pybind
-PYTHONPATH="dist/Debug" python ../examples/pybind11/demo.py
+编译产物位于 `dist/<Config>/engine_pybind/`：
+
+```
+dist/Debug/engine_pybind/        # Debug 构建（或 dist/Release/）
+├── __init__.py                  # from ._core import Engine, Scene, ...
+├── _core.cp312-win_amd64.pyd    # 内部 C 扩展
+├── _core.pyi                    # 类型存根（IDE 自动补全）
+└── py.typed                     # PEP 561 标记
+```
+
+### 安装（设置 PYTHONPATH）
+
+CppPy 的包无需 `pip install`，只需将 `dist/<Config>/` 加入 `PYTHONPATH`：
+
+```bash
+# Linux / macOS
+export PYTHONPATH="$(pwd)/dist/Debug"
+
+# Windows PowerShell
+$env:PYTHONPATH="$(Get-Location)\dist\Debug"
+
+# Windows CMD
+set PYTHONPATH=.\dist\Debug
+```
+
+也可以运行 `manage.py run`，它会自动探测并设置正确的 PYTHONPATH。
+
+### 使用
+
+```python
+import engine_pybind
+
+engine = engine_pybind.Engine()
+engine.init('{"app": "demo"}')
+engine.update(0.016)
+engine.shutdown()
+```
+
+### 打包分发
+
+```bash
+python scripts/manage.py package --scheme pybind11 --config Release
+# 产物: dist/engine_pybind-0.1.0.zip
+# 用户解压后将目录加入 PYTHONPATH 即可使用
 ```
 
 ## 物理文件与 Python 类型存根 (`.pyi`)

@@ -573,19 +573,49 @@ lib.engine_destroy(engine)
 6. **平台差异**：Windows 需要 `.def` 文件，`c_long` 宽度因平台而异
 7. **类型安全缺失**：ctypes 的类型检查发生在运行时，而非编译时
 
-## 编译与运行验证
+## 编译、安装与使用
+
+### 编译
 
 ```bash
-# 完整构建流程
 cd CppPy
 python scripts/manage.py setup
-python scripts/manage.py build
-python scripts/manage.py run --scheme cffi
+python scripts/manage.py build              # 或 --scheme cffi
+```
 
-# 或手动构建
-cd build
-cmake --build . --target engine_c
-PYTHONPATH="dist/Debug" python ../examples/cffi/demo.py
+编译产物位于 `dist/<Config>/engine_cffi/`：
+
+```
+dist/Debug/engine_cffi/
+├── __init__.py                  # from .cffi_bridge import Engine, Scene, ...
+├── cffi_bridge.py               # 手写的 Pythonic 包装器（ctypes）
+├── cffi_bridge.pyi              # 手写类型存根
+├── cffi_build.py                # CFFI builder（可选）
+├── engine_c.dll                 # 纯 C 共享库
+└── py.typed
+```
+
+### 安装与使用
+
+将 `dist/<Config>/` 加入 `PYTHONPATH`：
+
+```bash
+export PYTHONPATH="$(pwd)/dist/Debug"
+```
+
+```python
+import engine_cffi
+engine = engine_cffi.Engine()
+engine.init('{}')
+```
+
+注意：CFFI/ctypes 方案通过 `ctypes.CDLL` 加载 `engine_c.dll`，因此 `.py` 和 `.dll` 必须在同一目录。CppPy 的 CMake POST_BUILD 已自动处理这一点。
+
+### 打包分发
+
+```bash
+python scripts/manage.py package --scheme cffi --config Release
+# 产物: dist/engine_cffi-0.1.0.zip
 ```
 
 ## 物理文件与 Python 类型存根 (`.pyi`)
