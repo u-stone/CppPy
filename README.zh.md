@@ -42,34 +42,34 @@ dist/Debug/
 
 每个包都是标准的 Python 模块 — `__init__.py` 公开接口 + 内部 `_core` C 扩展 + `.pyi` 类型存根。
 
-## 作为库使用
+## 可编辑安装（开发推荐）
 
 ```bash
-# 无需 manage.py — 只需设置 PYTHONPATH 指向 dist/<Config>/
-# Linux / macOS:
-PYTHONPATH=dist/Debug python
-
-# Windows PowerShell:
-$env:PYTHONPATH="dist\Debug"
-python
+# 构建完成后，安装为可编辑模式 — 无需 PYTHONPATH
+python scripts/manage.py develop
+# 或: pip install -e .
 ```
+
+此后可以从**任意目录**直接导入，无需设置 PYTHONPATH：
 
 ```python
 >>> import enginepybind
 >>> engine = enginepybind.Engine()
 >>> engine.init('{"app":"demo"}')
->>> engine.update(0.016)
->>> engine.shutdown()
+```
+
+## 通过 PYTHONPATH 使用（备选）
+
+```bash
+PYTHONPATH=dist/Debug python     # Linux / macOS
+$env:PYTHONPATH="dist\Debug"; python  # Windows PowerShell
 ```
 
 ## 打包分发
 
 ```bash
-# 将所有或单个方案打包为 .zip 压缩包
 python scripts/manage.py package --config Release
-python scripts/manage.py package --scheme pybind11 --config Release
-
-# 产物: dist/enginepybind-0.1.0.zip, dist/enginenanobind-0.1.0.zip, ...
+# 产物: dist/enginepybind-0.1.0.zip 等
 ```
 
 ## 构建单个方案

@@ -363,6 +363,31 @@ def cmd_package(args):
     print("[package] Done.")
 
 
+def cmd_develop(args):
+    """pip install -e . — editable install for development.
+
+    Links the compiled packages in dist/<Config>/ into site-packages so
+    'import enginepybind' etc. work from any directory without PYTHONPATH.
+    """
+    python = _get_venv_python() if os.path.exists(_get_venv_python()) else sys.executable
+    packages_root = _find_packages_root()
+    if not os.path.isdir(packages_root) or not any(
+        d.startswith("engine") for d in os.listdir(packages_root)
+        if os.path.isdir(os.path.join(packages_root, d))
+    ):
+        print("[develop] No compiled packages found. Run 'build' first.",
+              file=sys.stderr)
+        sys.exit(1)
+
+    print("[develop] Running: {} -m pip install -e .".format(python))
+    print("[develop] Packages root: {}".format(packages_root))
+    result = _run([python, "-m", "pip", "install", "-e", "."])
+    if result.returncode != 0:
+        print("[develop] FAILED", file=sys.stderr)
+        sys.exit(1)
+    print("[develop] Done. Packages are now importable from anywhere.")
+
+
 def cmd_lint(args):
     """Run clang-format and flake8 checks."""
     print("[lint] Running clang-format check...")
@@ -591,12 +616,14 @@ def main():
     p_run.add_argument("--scheme", choices=ALL_SCHEMES,
                        help="Only run a specific scheme")
 
-    p_pkg = sub.add_parser("package", help="Build .whl distribution files")
+    p_pkg = sub.add_parser("package", help="Build .zip distribution files")
     p_pkg.add_argument("--scheme", choices=ALL_SCHEMES,
                        help="Only package a specific scheme")
     p_pkg.add_argument("--config", default="Release",
                        choices=["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
                        help="Build configuration to package (default: Release)")
+
+    sub.add_parser("develop", help="pip install -e . (editable install)")
 
     sub.add_parser("lint", help="Run clang-format and flake8 checks")
 
@@ -610,6 +637,7 @@ def main():
         "build": cmd_build,
         "run": cmd_run,
         "package": cmd_package,
+        "develop": cmd_develop,
         "lint": cmd_lint,
         "tidy": cmd_tidy,
     }

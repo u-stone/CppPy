@@ -531,8 +531,56 @@ LNK1319: 2 mismatches detected
 | Python3 find 冲突 | 全部 | 低 | 顶层统一 find，子目录复用 |
 | pybind11 exit 127 | pybind11 | 中 | `return_value_policy::reference_internal` |
 | CRT 不匹配 | Cython | 中 | 不用 `/FI`，用后处理补丁 |
+| 包名含下划线导致 wheel 名歧义 | 全部 | 低 | 去掉 `_`，用连写小写（`enginepybind`） |
+| `pip install -e .` 失败：`package_dir` 冲突 | 全部 | 低 | `pyproject.toml` 的 `[tool.setuptools.packages.find]` 与 `setup.py` 的 `package_dir` 不能共存；二选一，用 `setup.py` 控制路径 |
 
 ---
+
+## 11. 可编辑安装（`pip install -e .`）
+
+### 现象
+
+希望 `pip install -e .` 后从任意目录 `import enginepybind`，无需 PYTHONPATH。
+
+### 解决方案
+
+创建 `setup.py`，用 `find_packages(where="dist/<Config>")` 自动探测构建产物：
+
+```python
+from setuptools import setup, find_packages
+import os
+
+DIST = os.path.join(os.path.dirname(__file__), "dist")
+
+def _find_config():
+    for entry in os.listdir(DIST):
+        p = os.path.join(DIST, entry)
+        if os.path.isdir(p) and any(
+            f.startswith("engine") for f in os.listdir(p)
+            if os.path.isdir(os.path.join(p, f))
+        ):
+            return p
+    raise RuntimeError("No compiled packages. Run 'manage.py build' first.")
+
+setup(
+    name="cpppy-engine",
+    version="0.1.0",
+    packages=find_packages(where=_find_config()),
+    package_dir={"": _find_config()},
+)
+```
+
+### 踩坑记录
+
+**`pyproject.toml` 中的 `[tool.setuptools.packages.find]` 与 `setup.py` 的 `package_dir` 不能共存**。如果 `pyproject.toml` 中指定了 `where = ["dist"]`，setuptools 会从 `dist/` 查找包（发现 `Debug/` 子目录而非包本身），导致 `package_dir` 双重嵌套错误。修复：从 `pyproject.toml` 中移除 `[tool.setuptools.packages.find]`，全部交由 `setup.py` 处理。
+
+### 使用
+
+```bash
+python scripts/manage.py build    # 先编译
+python scripts/manage.py develop  # pip install -e .
+# 然后从任意目录即可 import enginepybind
+```
 
 ## 10. 原生 Python 包结构 — 业界成熟度评估
 

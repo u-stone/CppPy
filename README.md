@@ -29,42 +29,36 @@ python scripts/manage.py lint
 python scripts/manage.py tidy
 ```
 
-After building, `dist/Debug/` (or `dist/Release/`) contains 5 self-contained Python packages:
+After building, `dist/Debug/` contains 5 self-contained Python packages. Each is a standard Python package with `__init__.py` + internal `_core` C extension + `.pyi` stubs.
 
-```
-dist/Debug/
-├── enginepybind/      # import enginepybind
-├── enginenanobind/    # import enginenanobind
-├── engineswig/        # import engineswig
-├── enginecython/      # import enginecython
-└── enginecffi/        # import enginecffi
-```
-
-Each package is a native Python module — `__init__.py` + internal `_core` C extension + `.pyi` stubs.
-
-## Using as a Library
+## Editable Install (recommended for development)
 
 ```bash
-# Without manage.py — just set PYTHONPATH to dist/<Config>/
-PYTHONPATH=dist/Debug python       # Linux / macOS
-$env:PYTHONPATH="dist\Debug"; python  # Windows PowerShell
+# After build, install in editable mode — no PYTHONPATH needed
+python scripts/manage.py develop
+# Or: pip install -e .
 ```
+
+Now you can import from **any directory** without setting PYTHONPATH:
 
 ```python
 >>> import enginepybind
 >>> engine = enginepybind.Engine()
 >>> engine.init('{"app":"demo"}')
->>> engine.update(0.016)
->>> engine.shutdown()
+```
+
+## Using via PYTHONPATH (alternative)
+
+```bash
+# Without editable install — set PYTHONPATH manually
+PYTHONPATH=dist/Debug python       # Linux / macOS
+$env:PYTHONPATH="dist\Debug"; python  # Windows PowerShell
 ```
 
 ## Packaging for Distribution
 
 ```bash
-# Package all or a single scheme as .zip archives
 python scripts/manage.py package --config Release
-python scripts/manage.py package --scheme pybind11 --config Release
-
 # Output: dist/enginepybind-0.1.0.zip, dist/enginenanobind-0.1.0.zip, ...
 ```
 
