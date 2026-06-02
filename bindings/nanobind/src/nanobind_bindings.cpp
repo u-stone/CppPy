@@ -13,7 +13,7 @@
 namespace nb = nanobind;
 using namespace engine;
 
-NB_MODULE(engine_nanobind, m) {
+NB_MODULE(_core, m) {
   m.doc() = "CppPy engine - nanobind binding";
 
   nb::class_<EngineFacade>(m, "Engine")

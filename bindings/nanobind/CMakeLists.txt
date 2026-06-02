@@ -1,29 +1,41 @@
 # bindings/nanobind/CMakeLists.txt
-nanobind_add_module(engine_nanobind src/nanobind_bindings.cpp)
+nanobind_add_module(_core_nanobind src/nanobind_bindings.cpp)
 
-target_sources(engine_nanobind PRIVATE
+target_sources(_core_nanobind PRIVATE
   ${CMAKE_SOURCE_DIR}/engine/include/engine/cpp_api.h
   ${CMAKE_SOURCE_DIR}/engine/include/engine/facade.h
   ${CMAKE_SOURCE_DIR}/engine/include/engine/game_object.h
   ${CMAKE_SOURCE_DIR}/engine/include/engine/scene.h
 )
 
-target_link_libraries(engine_nanobind PRIVATE engine)
+target_link_libraries(_core_nanobind PRIVATE engine)
 
-target_include_directories(engine_nanobind PRIVATE
+target_include_directories(_core_nanobind PRIVATE
   ${CMAKE_SOURCE_DIR}/engine/include
 )
 
-set_target_properties(engine_nanobind PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/nanobind"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/nanobind"
+set_target_properties(_core_nanobind PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/_build/nanobind"
+  OUTPUT_NAME "_core_nanobind"
 )
 
-# Generate .pyi type stubs (nanobind built-in, reads __nb_signature__).
-add_custom_command(TARGET engine_nanobind POST_BUILD
+set(_pkg "${CMAKE_BINARY_DIR}/bindings_output/$<CONFIG>/engine_nanobind")
+
+add_custom_command(TARGET _core_nanobind POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"
+  COMMAND ${CMAKE_COMMAND} -E rename
+    "$<TARGET_FILE:_core_nanobind>"
+    "${_pkg}/_core$<TARGET_FILE_SUFFIX:_core_nanobind>"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/python/__init__.py"
+    "${_pkg}/"
+  COMMENT "nanobind: assembling package engine_nanobind/"
+)
+
+add_custom_command(TARGET _core_nanobind POST_BUILD
   COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_SOURCE_DIR}/scripts/generate_stubs.py
     --scheme nanobind
-    --module-dir "$<TARGET_FILE_DIR:engine_nanobind>"
+    --module-dir "${_pkg}"
   COMMENT "nanobind: generating .pyi stubs"
 )

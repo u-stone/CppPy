@@ -529,3 +529,42 @@ LNK1319: 2 mismatches detected
 | Python3 find 冲突 | 全部 | 低 | 顶层统一 find，子目录复用 |
 | pybind11 exit 127 | pybind11 | 中 | `return_value_policy::reference_internal` |
 | CRT 不匹配 | Cython | 中 | 不用 `/FI`，用后处理补丁 |
+
+---
+
+## 10. 原生 Python 包结构 — 业界成熟度评估
+
+### 当前方案已达标
+
+CppPy 采用的"内部 C 扩展 `_core.pyd` + `__init__.py` 重导出"结构是 **业界当前最成熟的标准做法**。主流 Python/C++ 混合项目均采用此模式：
+
+| 项目 | 内部模块 | 公开 API | 说明 |
+|------|----------|----------|------|
+| **NumPy** | `numpy/_core.cpython-*.so` | `numpy/__init__.py` → `from numpy._core import *` | 数值计算库，C 扩展 + Python 包装 |
+| **PyTorch** | `torch/_C.cpython-*.so` | `torch/__init__.py` → `from torch._C import *` | 深度学习框架，C++ 后端 |
+| **Pydantic** | `pydantic/_internal/` + `pydantic_core` | `pydantic/__init__.py` | 数据验证库，Rust/C 核心 |
+| **OpenCV** | `cv2/` (直接是包) | `cv2/__init__.py` | 计算机视觉，C++ 后端 |
+| **CppPy** | `engine_pybind/_core.cp312-win_amd64.pyd` | `engine_pybind/__init__.py` → `from ._core import *` | ✅ 与 NumPy/PyTorch 同模式 |
+
+### 业界标准的关键要素
+
+| 要素 | 说明 | CppPy 状态 |
+|------|------|-----------|
+| **内部模块以下划线前缀** | `_core`、`_C` 等标记为内部实现，用户不应直接导入 | ✅ |
+| **`__init__.py` 重导出** | 公开 API 在 `__init__.py` 中显式列出，控制暴露面 | ✅ |
+| **`.pyi` 类型存根** | IDE 自动补全和静态类型检查 | ✅ (5 方案均已生成) |
+| **`py.typed` 标记** | PEP 561 标准，告知类型检查器包有类型信息 | ✅ |
+| **存根质量** | nanobind (原生 `__nb_signature__`) > pybind11 (docstring 解析) > Cython (AST) > SWIG (wrapper .py) > CFFI (手写) | ✅ |
+| **多配置生成器支持** | Visual Studio `Debug`/`Release` 子目录兼容 | ✅ |
+
+### 仍可改进的方向（非必需）
+
+| 方向 | 说明 | 优先级 |
+|------|------|--------|
+| **`pip install -e .` 支持** | 通过 `setup.py` / `pyproject.toml` 使包可直接以开发模式安装，无需手动设置 PYTHONPATH | 低 |
+| **Wheel 打包** | 构建可分发的 `.whl` 包，支持 `pip install` | 低 |
+| **CI/CD 矩阵构建** | 多平台 (Windows/macOS/Linux)、多 Python 版本自动构建 | 低 |
+| **API 文档自动生成** | Sphinx + autodoc 从 `.pyi` 自动生成 HTML 文档 | 低 |
+| **符号版本管理** | 为 `.pyd`/`.so` 设置 `SONAME` 和版本符号 | 低 |
+
+**结论**：CppPy 在 C++/Python 绑定方案上已达到业界主流成熟度。当前结构 NumPy、PyTorch 也在用，没有本质差距。上述改进方向属于"锦上添花"级别，适合在项目需要对外分发时再实施。

@@ -10,7 +10,7 @@
 namespace py = pybind11;
 using namespace engine;
 
-PYBIND11_MODULE(engine_pybind, m) {
+PYBIND11_MODULE(_core, m) {
   m.doc() = "CppPy engine - pybind11 binding";
 
   py::class_<EngineFacade>(m, "Engine")

@@ -27,13 +27,13 @@ def _run(cmd, **kwargs):
 def gen_nanobind(module_dir):
     """Use nanobind's native stub generator (reads __nb_signature__)."""
     # nanobind.stubgen -O expects a directory, not a filename
+    # PYTHONPATH must include module_dir so _core.pyd can be imported.
     result = _run([
         _python(), "-m", "nanobind.stubgen",
-        "-m", "engine_nanobind",
+        "-m", "_core",
         "-O", module_dir,
     ], env={**os.environ, "PYTHONPATH": module_dir})
     if result.returncode == 0:
-        # PEP 561 marker — tells type checkers this package has inline stubs
         marker = os.path.join(module_dir, "py.typed")
         open(marker, "w").close()
         print(f"  [stubs] wrote {marker}")
@@ -46,7 +46,7 @@ def gen_pybind11(module_dir):
     """Generate stubs via pybind11-stubgen (runtime introspection)."""
     _run([
         _python(), "-m", "pybind11_stubgen",
-        "engine_pybind",
+        "_core",
         "-o", module_dir,
     ], env={**os.environ, "PYTHONPATH": module_dir})
     marker = os.path.join(module_dir, "py.typed")
@@ -70,15 +70,15 @@ def gen_cython(module_dir):
 def gen_swig(module_dir):
     """SWIG has no dedicated .pyi tool.
 
-    The SWIG-generated engine_swig.py is a complete human-readable Python
-    wrapper (not a binary extension), so it serves as its own documentation.
-    Users can inspect it directly or use help(engine_swig).
+    The SWIG-generated wrapper is installed as engine_swig/__init__.py.
+    _engine_swig.pyd sits alongside the package directory (at the PYTHONPATH
+    root) so the wrapper's absolute 'import _engine_swig' resolves.
 
-    We still attempt mypy stubgen for IDE type hints, but the SWIG wrapper's
-    absolute import of _engine_swig causes stubgen to fail.  As a fallback,
-    we generate a minimal py.typed marker so type-checkers know this is a
-    typed package, and rely on engine_swig.py itself for the API surface.
+    We attempt mypy stubgen with PYTHONPATH set to the packages root
+    (one level above the package) so both the package and _engine_swig.pyd
+    are importable.
     """
+    packages_root = os.path.dirname(module_dir)
     stubgen_exe = os.path.join(os.path.dirname(_python()), "stubgen.exe")
     if not os.path.exists(stubgen_exe):
         stubgen_exe = os.path.join(os.path.dirname(_python()), "stubgen")
@@ -86,14 +86,13 @@ def gen_swig(module_dir):
     result = _run([
         stubgen_exe,
         "-m", "engine_swig",
-        "-o", module_dir,
-    ], env={**os.environ, "PYTHONPATH": module_dir})
+        "-o", packages_root,
+    ], env={**os.environ, "PYTHONPATH": packages_root})
 
     if result.returncode != 0:
         print("  [stubs] mypy stubgen failed for SWIG (expected — SWIG wrapper uses absolute import)")
-        print("  [stubs] Instead, read engine_swig.py directly or use help(engine_swig).")
+        print("  [stubs] Instead, read engine_swig/__init__.py or use help(engine_swig).")
 
-    # Create py.typed marker so the SWIG-generated .py is recognized
     marker = os.path.join(module_dir, "py.typed")
     open(marker, "w").close()
     print(f"  [stubs] wrote {marker}")

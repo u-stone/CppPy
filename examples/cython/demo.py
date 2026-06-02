@@ -5,10 +5,17 @@
 import os
 import sys
 
-_bindings_dir = os.path.join(
-    os.path.dirname(__file__), "..", "..", "build", "bindings_output", "cython"
+_bindings_root = os.path.join(
+    os.path.dirname(__file__), "..", "..", "build", "bindings_output"
 )
-sys.path.insert(0, _bindings_dir)
+for _cfg in ("Debug", "Release", ""):
+    _path = os.path.join(_bindings_root, _cfg) if _cfg else _bindings_root
+    if os.path.isdir(_path) and any(
+        d.startswith("engine_") and os.path.isdir(os.path.join(_path, d))
+        for d in os.listdir(_path)
+    ):
+        sys.path.insert(0, _path)
+        break
 
 # When built via setup_cython.py, the module is importable directly.
 # When built via CMake, we need to find the .pyd/.so

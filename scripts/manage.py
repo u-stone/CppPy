@@ -246,41 +246,44 @@ def cmd_build(args):
     print("[build] Build OK")
 
 
-def _find_module_dir(scheme):
-    """Return the directory containing the built Python module for a scheme.
+def _find_packages_root():
+    """Return the directory containing all engine_* package directories.
 
-    With single-config generators (Ninja, Make) the module lands directly in
-    bindings_output/<scheme>/.  Multi-config generators (VS, Xcode) append a
+    With single-config generators (Ninja, Make) the packages land directly in
+    bindings_output/.  Multi-config generators (VS, Xcode) append a
     configuration subdirectory (Debug, Release, …).  This helper probes for
     the most likely candidate so PYTHONPATH is set correctly.
+
+    After the native-package restructure, each scheme is a proper Python
+    package (e.g. engine_pybind/__init__.py + _core.pyd).  We look for
+    directories named engine_* that contain __init__.py.
     """
-    base = os.path.join(BINDINGS_OUTPUT, scheme)
-    if not os.path.isdir(base):
-        return base
+    base = BINDINGS_OUTPUT  # build/bindings_output/
 
-    # If the base directory itself contains a .pyd / .dll / .so, use it.
-    for entry in os.listdir(base):
-        if entry.endswith((".pyd", ".dll", ".so")):
-            return base
-        # Also accept the SWIG-generated .py wrapper (engine_swig.py).
-        if entry.endswith(".py") and scheme == "swig":
-            return base
+    # Single-config: packages are directly in bindings_output/
+    try:
+        for entry in os.listdir(base):
+            if entry.startswith("engine_") and os.path.isdir(os.path.join(base, entry)):
+                pkg_init = os.path.join(base, entry, "__init__.py")
+                if os.path.isfile(pkg_init):
+                    return base
+    except OSError:
+        pass
 
-    # Multi-config: search one level down for the most recently modified
-    # directory that contains a module.
+    # Multi-config: search one level down (Debug, Release, …)
     candidates = []
     try:
         for entry in os.listdir(base):
             sub = os.path.join(base, entry)
             if not os.path.isdir(sub):
                 continue
-            for f in os.listdir(sub):
-                if f.endswith((".pyd", ".dll", ".so")):
-                    candidates.append((os.path.getmtime(sub), sub))
-                    break
-                if f.endswith(".py") and scheme == "swig":
-                    candidates.append((os.path.getmtime(sub), sub))
-                    break
+            for sub_entry in os.listdir(sub):
+                if (sub_entry.startswith("engine_")
+                        and os.path.isdir(os.path.join(sub, sub_entry))):
+                    pkg_init = os.path.join(sub, sub_entry, "__init__.py")
+                    if os.path.isfile(pkg_init):
+                        candidates.append((os.path.getmtime(sub), sub))
+                        break
     except OSError:
         pass
 
@@ -309,10 +312,10 @@ def cmd_run(args):
             results[scheme] = "SKIP (no example)"
             continue
 
-        module_dir = _find_module_dir(scheme)
+        packages_root = _find_packages_root()
         print(f"\n[run] === {scheme} ===")
         env = os.environ.copy()
-        env["PYTHONPATH"] = module_dir
+        env["PYTHONPATH"] = packages_root
 
         result = _run([python, example], env=env)
         if result.returncode == 0:
