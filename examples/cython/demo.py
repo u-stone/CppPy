@@ -1,42 +1,22 @@
 #!/usr/bin/env python3
-# examples/cython/demo.py
-# Demonstrates the Cython binding — uses compiled .pyx module wrapping C API.
+# examples/cython/demo.py — Cython binding demo.
+# VS Code users: .vscode/settings.json already configures PYTHONPATH.
 
-import os
-import sys
+import os, sys
 
-_dist_root = os.path.join(
-    os.path.dirname(__file__), "..", "..", "dist"
-)
-for _cfg in ("Debug", "Release", ""):
-    _path = os.path.join(_dist_root, _cfg) if _cfg else _dist_root
-    if os.path.isdir(_path) and any(
-        d.startswith("engine_") and os.path.isdir(os.path.join(_path, d))
-        for d in os.listdir(_path)
-    ):
-        sys.path.insert(0, _path)
-        break
-
-# When built via setup_cython.py, the module is importable directly.
-# When built via CMake, we need to find the .pyd/.so
 try:
     import engine_cython
 except ImportError:
-    # CMake build may produce a differently named artifact
-    import glob
-
-    _pattern = os.path.join(_bindings_dir, "engine_cython*")
-    _matches = glob.glob(_pattern)
-    if _matches:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(
-            "engine_cython", _matches[0]
-        )
-        engine_cython = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(engine_cython)
-    else:
-        raise
+    _d = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
+    for _cfg in ("Debug", "Release", ""):
+        _p = os.path.join(_d, _cfg) if _cfg else _d
+        if os.path.isdir(_p) and any(
+            e.startswith("engine_") and os.path.isdir(os.path.join(_p, e))
+            for e in os.listdir(_p)
+        ):
+            sys.path.insert(0, _p)
+            break
+    import engine_cython
 
 
 def main():

@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
-"""examples/nanobind/demo.py — nanobind binding demo."""
+"""examples/nanobind/demo.py — nanobind binding demo.
 
-import os
-import sys
+VS Code users: .vscode/settings.json already configures PYTHONPATH.
+Terminal users: run via 'manage.py run' or 'PYTHONPATH=dist/Debug python ...'.
+"""
 
-_dist_root = os.path.join(
-    os.path.dirname(__file__), "..", "..", "dist"
-)
-for _cfg in ("Debug", "Release", ""):
-    _path = os.path.join(_dist_root, _cfg) if _cfg else _dist_root
-    if os.path.isdir(_path) and any(
-        d.startswith("engine_") and os.path.isdir(os.path.join(_path, d))
-        for d in os.listdir(_path)
-    ):
-        sys.path.insert(0, _path)
-        break
+import os, sys
 
-import engine_nanobind
+try:
+    import engine_nanobind
+except ImportError:
+    _d = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
+    for _cfg in ("Debug", "Release", ""):
+        _p = os.path.join(_d, _cfg) if _cfg else _d
+        if os.path.isdir(_p) and any(
+            e.startswith("engine_") and os.path.isdir(os.path.join(_p, e))
+            for e in os.listdir(_p)
+        ):
+            sys.path.insert(0, _p)
+            break
+    import engine_nanobind
 
 
 def main():

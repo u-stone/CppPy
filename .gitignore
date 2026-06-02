@@ -15,6 +15,7 @@ build/
 # IDE / Editor
 .idea/
 .vscode/
+!.vscode/settings.json       # 项目共享的 VS Code 配置
 *.swp
 *.swo
 
