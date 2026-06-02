@@ -20,11 +20,11 @@ PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 DIST_DIR = os.path.join(PROJECT_ROOT, "dist")
 
 PACKAGE_META = {
-    "pybind11": "engine_pybind",
-    "nanobind": "engine_nanobind",
-    "swig":     "engine_swig",
-    "cython":   "engine_cython",
-    "cffi":     "engine_cffi",
+    "pybind11": "enginepybind",
+    "nanobind": "enginenanobind",
+    "swig":     "engineswig",
+    "cython":   "enginecython",
+    "cffi":     "enginecffi",
 }
 
 VERSION = "0.1.0"

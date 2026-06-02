@@ -5,7 +5,7 @@
 import os, sys
 
 try:
-    from engine_cffi import Engine
+    from enginecffi import Engine
 except ImportError:
     _d = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
     for _cfg in ("Debug", "Release", ""):
@@ -16,7 +16,7 @@ except ImportError:
         ):
             sys.path.insert(0, _p)
             break
-    from engine_cffi import Engine
+    from enginecffi import Engine
 
 
 def main():

@@ -19,7 +19,7 @@ set_target_properties(_core_nanobind PROPERTIES
   OUTPUT_NAME "_core_nanobind"
 )
 
-set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engine_nanobind")
+set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/enginenanobind")
 
 add_custom_command(TARGET _core_nanobind POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"
@@ -29,7 +29,7 @@ add_custom_command(TARGET _core_nanobind POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/python/__init__.py"
     "${_pkg}/"
-  COMMENT "nanobind: assembling package engine_nanobind/"
+  COMMENT "nanobind: assembling package enginenanobind/"
 )
 
 add_custom_command(TARGET _core_nanobind POST_BUILD

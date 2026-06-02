@@ -5,8 +5,8 @@ The compiled C extension is _core.pyd; this __init__.py re-exports the
 public API so users get a clean package interface.
 
 Usage:
-    import engine_pybind
-    engine = engine_pybind.Engine()
+    import enginepybind
+    engine = enginepybind.Engine()
     engine.init('{"app":"demo"}')
     scene = engine.create_scene("Main")
     ...

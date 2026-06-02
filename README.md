@@ -6,10 +6,10 @@ A technical verification project comparing 5 approaches for bridging a C++17 gam
 
 | Scheme | Approach | Module Name |
 |--------|----------|-------------|
-| **pybind11** | Header-only binding via `PYBIND11_MODULE` | `engine_pybind` |
-| **nanobind** | Next-gen pybind11 rewrite | `engine_nanobind` |
-| **SWIG** | `.i` interface file auto-generation | `engine_swig` |
-| **Cython** | `.pyx` → compiled C extension | `engine_cython` |
+| **pybind11** | Header-only binding via `PYBIND11_MODULE` | `enginepybind` |
+| **nanobind** | Next-gen pybind11 rewrite | `enginenanobind` |
+| **SWIG** | `.i` interface file auto-generation | `engineswig` |
+| **Cython** | `.pyx` → compiled C extension | `enginecython` |
 | **CFFI + ctypes** | Pure-C `extern "C"` ABI | `cffi_bridge` |
 
 ## Quick Start
@@ -33,11 +33,11 @@ After building, `dist/Debug/` (or `dist/Release/`) contains 5 self-contained Pyt
 
 ```
 dist/Debug/
-├── engine_pybind/      # import engine_pybind
-├── engine_nanobind/    # import engine_nanobind
-├── engine_swig/        # import engine_swig
-├── engine_cython/      # import engine_cython
-└── engine_cffi/        # import engine_cffi
+├── enginepybind/      # import enginepybind
+├── enginenanobind/    # import enginenanobind
+├── engineswig/        # import engineswig
+├── enginecython/      # import enginecython
+└── enginecffi/        # import enginecffi
 ```
 
 Each package is a native Python module — `__init__.py` + internal `_core` C extension + `.pyi` stubs.
@@ -51,8 +51,8 @@ $env:PYTHONPATH="dist\Debug"; python  # Windows PowerShell
 ```
 
 ```python
->>> import engine_pybind
->>> engine = engine_pybind.Engine()
+>>> import enginepybind
+>>> engine = enginepybind.Engine()
 >>> engine.init('{"app":"demo"}')
 >>> engine.update(0.016)
 >>> engine.shutdown()
@@ -65,7 +65,7 @@ $env:PYTHONPATH="dist\Debug"; python  # Windows PowerShell
 python scripts/manage.py package --config Release
 python scripts/manage.py package --scheme pybind11 --config Release
 
-# Output: dist/engine_pybind-0.1.0.zip, dist/engine_nanobind-0.1.0.zip, ...
+# Output: dist/enginepybind-0.1.0.zip, dist/enginenanobind-0.1.0.zip, ...
 ```
 
 ## Build a Single Scheme

@@ -95,7 +95,7 @@ MSVC /MDd 定义 _DEBUG
 SWIG 4.4.0 已内置此机制，只需启用编译宏：
 
 ```cmake
-target_compile_definitions(engine_swig PRIVATE
+target_compile_definitions(engineswig PRIVATE
   $<$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>:SWIG_PYTHON_INTERPRETER_NO_DEBUG>
 )
 ```
@@ -119,10 +119,10 @@ Cython 生成的 `.cxx` 直接 `#include "Python.h"` 没有保护。使用 CMake
 ```cmake
 # CMakeLists.txt
 add_custom_command(
-  OUTPUT ${CYTHON_OUTPUT_DIR}/engine_cython.cxx
-  COMMAND ${CYTHON_EXECUTABLE} --cplus -3 -o ${CYTHON_OUTPUT_DIR}/engine_cython.cxx ...
+  OUTPUT ${CYTHON_OUTPUT_DIR}/enginecython.cxx
+  COMMAND ${CYTHON_EXECUTABLE} --cplus -3 -o ${CYTHON_OUTPUT_DIR}/enginecython.cxx ...
   COMMAND ${CMAKE_COMMAND}
-    "-DGENERATED_FILE=${CYTHON_OUTPUT_DIR}/engine_cython.cxx"
+    "-DGENERATED_FILE=${CYTHON_OUTPUT_DIR}/enginecython.cxx"
     -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_cython_debug.cmake
   ...
 )
@@ -198,8 +198,8 @@ nanobind 在 `nb_python.h` 中采用完全相同的模式。使用 `pybind11_add
 ### 现象
 
 ```
-ModuleNotFoundError: No module named 'engine_pybind'
-ModuleNotFoundError: No module named '_engine_swig'
+ModuleNotFoundError: No module named 'enginepybind'
+ModuleNotFoundError: No module named '_engineswig'
 ```
 
 ### 根因
@@ -207,8 +207,8 @@ ModuleNotFoundError: No module named '_engine_swig'
 VS / Xcode 等多配置生成器在输出目录下追加配置子目录：
 
 ```
-单配置 (Ninja):    dist/Release/engine_pybind/_core.pyd
-多配置 (VS):       dist/Debug/engine_pybind/_core.pyd
+单配置 (Ninja):    dist/Release/enginepybind/_core.pyd
+多配置 (VS):       dist/Debug/enginepybind/_core.pyd
 ```
 
 `manage.py run` 的 `PYTHONPATH` 只指向基础目录，找不到模块。此外 SWIG 和 CFFI 的 Python 包装文件（`.py`）被 POST_BUILD 复制到基础目录，而 `.pyd`/`.dll` 在 `Debug/` 子目录，导致 Python 包装文件运行时找不到二进制模块。
@@ -254,18 +254,18 @@ CMake 的 `$<TARGET_FILE_DIR:target>` 生成器表达式在构建时展开为目
 
 ```cmake
 # 错误写法 —— 多配置生成器下 .py 和 .pyd 不在同一目录
-add_custom_command(TARGET engine_swig POST_BUILD
+add_custom_command(TARGET engineswig POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_BINARY_DIR}/engine_swig.py"
+    "${CMAKE_CURRENT_BINARY_DIR}/engineswig.py"
     "${CMAKE_BINARY_DIR}/bindings_output/swig/"  # ❌ 旧的硬编码路径
 )
 
 # 正确写法 —— 使用 $<CONFIG> 确保包目录在 dist/<Config>/ 下
-set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engine_swig")
-add_custom_command(TARGET engine_swig POST_BUILD
+set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engineswig")
+add_custom_command(TARGET engineswig POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_BINARY_DIR}/engine_swig.py"
+    "${CMAKE_CURRENT_BINARY_DIR}/engineswig.py"
     "${_pkg}/__init__.py"  # ✅ SWIG 包装器作为 __init__.py
 )
 ```
@@ -307,7 +307,7 @@ set(ENGINE_HEADERS
 add_library(engine STATIC src/facade.cpp ... ${ENGINE_HEADERS})
 
 # 各 binding target
-target_sources(engine_pybind PRIVATE
+target_sources(enginepybind PRIVATE
   ${CMAKE_SOURCE_DIR}/engine/include/engine/cpp_api.h
   ...
 )
@@ -546,7 +546,7 @@ CppPy 采用的"内部 C 扩展 `_core.pyd` + `__init__.py` 重导出"结构是 
 | **PyTorch** | `torch/_C.cpython-*.so` | `torch/__init__.py` → `from torch._C import *` | 深度学习框架，C++ 后端 |
 | **Pydantic** | `pydantic/_internal/` + `pydantic_core` | `pydantic/__init__.py` | 数据验证库，Rust/C 核心 |
 | **OpenCV** | `cv2/` (直接是包) | `cv2/__init__.py` | 计算机视觉，C++ 后端 |
-| **CppPy** | `engine_pybind/_core.cp312-win_amd64.pyd` | `engine_pybind/__init__.py` → `from ._core import *` | ✅ 与 NumPy/PyTorch 同模式 |
+| **CppPy** | `enginepybind/_core.cp312-win_amd64.pyd` | `enginepybind/__init__.py` → `from ._core import *` | ✅ 与 NumPy/PyTorch 同模式 |
 
 ### 业界标准的关键要素
 
@@ -570,11 +570,11 @@ CppPy 的编译产物以三种形式交付给用户：
 ```bash
 # Linux / macOS
 export PYTHONPATH="$(pwd)/dist/Debug"
-python -c "import engine_pybind; print(engine_pybind.Engine())"
+python -c "import enginepybind; print(enginepybind.Engine())"
 
 # Windows PowerShell
 $env:PYTHONPATH=".\dist\Debug"
-python -c "import engine_pybind; print(engine_pybind.Engine())"
+python -c "import enginepybind; print(enginepybind.Engine())"
 ```
 
 这是最简单、最直接的交付方式，适合开发调试和内部分发。`dist/` 目录独立于 `build/`，可安全删除 `build/` 而不会丢失编译产物。
@@ -586,14 +586,14 @@ python -c "import engine_pybind; print(engine_pybind.Engine())"
 ```bash
 python scripts/manage.py build --config Release
 python scripts/manage.py package --config Release
-# 产物: dist/engine_pybind-0.1.0.zip, dist/engine_nanobind-0.1.0.zip, ...
+# 产物: dist/enginepybind-0.1.0.zip, dist/enginenanobind-0.1.0.zip, ...
 ```
 
 用户收到后：
 ```bash
-unzip engine_pybind-0.1.0.zip -d /path/to/packages/
+unzip enginepybind-0.1.0.zip -d /path/to/packages/
 export PYTHONPATH="/path/to/packages:$PYTHONPATH"
-python -c "import engine_pybind"
+python -c "import enginepybind"
 ```
 
 #### 形式三：`.whl` 包（生产阶段，规划中）
@@ -605,7 +605,7 @@ python -c "import engine_pybind"
 无论哪种形式，用户最终得到的**单个方案包**长这样：
 
 ```
-engine_pybind/                      # 一个标准的 Python 包
+enginepybind/                      # 一个标准的 Python 包
 ├── __init__.py                     # from ._core import Engine, Scene, ...
 ├── _core.cp312-win_amd64.pyd       # 内部 C++ 扩展（平台相关）
 ├── _core.pyi                       # 类型存根（IDE 自动补全）
@@ -615,9 +615,9 @@ engine_pybind/                      # 一个标准的 Python 包
 用户使用方式与纯 Python 库完全一致：
 
 ```python
-import engine_pybind
+import enginepybind
 
-engine = engine_pybind.Engine()
+engine = enginepybind.Engine()
 engine.init('{"app": "my_game"}')
 scene = engine.create_scene("Level1")
 player = scene.create_object("Hero")

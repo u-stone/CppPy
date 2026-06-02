@@ -8,7 +8,7 @@ Terminal users: run via 'manage.py run' or 'PYTHONPATH=dist/Debug python ...'.
 import os, sys
 
 try:
-    import engine_nanobind
+    import enginenanobind
 except ImportError:
     _d = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
     for _cfg in ("Debug", "Release", ""):
@@ -19,7 +19,7 @@ except ImportError:
         ):
             sys.path.insert(0, _p)
             break
-    import engine_nanobind
+    import enginenanobind
 
 
 def main():
@@ -27,7 +27,7 @@ def main():
     print("  CppPy — nanobind Demo")
     print("=" * 50)
 
-    engine = engine_nanobind.Engine()
+    engine = enginenanobind.Engine()
     print("[demo] Engine created")
 
     engine.init('{"app": "nanobind_demo"}')

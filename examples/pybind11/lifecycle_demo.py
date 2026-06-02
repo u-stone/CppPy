@@ -6,7 +6,7 @@
 import os, sys
 
 try:
-    import engine_pybind
+    import enginepybind
 except ImportError:
     _d = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
     for _cfg in ("Debug", "Release", ""):
@@ -17,7 +17,7 @@ except ImportError:
         ):
             sys.path.insert(0, _p)
             break
-    import engine_pybind
+    import enginepybind
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     print("  CppPy — Lifecycle Demo (pybind11)")
     print("=" * 50)
 
-    engine = engine_pybind.Engine()
+    engine = enginepybind.Engine()
     engine.init('{"app": "lifecycle_demo"}')
 
     # Create scene

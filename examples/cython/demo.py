@@ -5,7 +5,7 @@
 import os, sys
 
 try:
-    import engine_cython
+    import enginecython
 except ImportError:
     _d = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
     for _cfg in ("Debug", "Release", ""):
@@ -16,7 +16,7 @@ except ImportError:
         ):
             sys.path.insert(0, _p)
             break
-    import engine_cython
+    import enginecython
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     print("=" * 50)
 
     # Use the Cython-wrapped Pythonic API
-    engine = engine_cython.Engine()
+    engine = enginecython.Engine()
     print("[demo] Engine created")
 
     ok = engine.init('{"app": "cython_demo"}')

@@ -5,8 +5,8 @@ The compiled C extension is _core.pyd; this __init__.py re-exports the
 public API so users get a clean package interface.
 
 Usage:
-    import engine_nanobind
-    engine = engine_nanobind.Engine()
+    import enginenanobind
+    engine = enginenanobind.Engine()
     engine.init('{"app":"demo"}')
     ...
 """

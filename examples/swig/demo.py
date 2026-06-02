@@ -5,7 +5,7 @@
 import os, sys
 
 try:
-    import engine_swig
+    import engineswig
 except ImportError:
     _d = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
     for _cfg in ("Debug", "Release", ""):
@@ -16,7 +16,7 @@ except ImportError:
         ):
             sys.path.insert(0, _p)
             break
-    import engine_swig
+    import engineswig
 
 
 def _enc(s):
@@ -35,46 +35,46 @@ def main():
     print("=" * 50)
 
     # engine_create_and_init is a %inline helper from the .i file
-    engine = engine_swig.engine_create_and_init(_enc('{"app": "swig_demo"}'))
+    engine = engineswig.engine_create_and_init(_enc('{"app": "swig_demo"}'))
     print(f"[demo] Engine created: {engine}")
 
-    initialized = engine_swig.engine_is_initialized(engine)
+    initialized = engineswig.engine_is_initialized(engine)
     print(f"[demo] Engine initialized: {bool(initialized)}")
 
     # Create scene
-    scene = engine_swig.scene_create(engine, _enc("MainScene"))
+    scene = engineswig.scene_create(engine, _enc("MainScene"))
     print(f"[demo] Scene created: {scene}")
 
     # Create game objects
-    player = engine_swig.go_create(scene, _enc("Player"))
-    enemy = engine_swig.go_create(scene, _enc("Enemy"))
-    pname = _dec(engine_swig.go_name(player))
-    pid = engine_swig.go_id(player)
-    ename = _dec(engine_swig.go_name(enemy))
+    player = engineswig.go_create(scene, _enc("Player"))
+    enemy = engineswig.go_create(scene, _enc("Enemy"))
+    pname = _dec(engineswig.go_name(player))
+    pid = engineswig.go_id(player)
+    ename = _dec(engineswig.go_name(enemy))
     print(f"[demo] Objects: {pname} (id={pid}), {ename}")
 
     # Add components
-    t_comp = engine_swig.go_add_component(player, _enc("Transform"))
-    ai_comp = engine_swig.go_add_component(enemy, _enc("AI"))
-    t_name = _dec(engine_swig.component_type_name(t_comp))
-    ai_name = _dec(engine_swig.component_type_name(ai_comp))
+    t_comp = engineswig.go_add_component(player, _enc("Transform"))
+    ai_comp = engineswig.go_add_component(enemy, _enc("AI"))
+    t_name = _dec(engineswig.component_type_name(t_comp))
+    ai_name = _dec(engineswig.component_type_name(ai_comp))
     print(f"[demo] Components: {t_name} on Player, {ai_name} on Enemy")
 
     # Mass spawn (batch operation)
-    engine_swig.engine_mass_spawn(engine, _enc("MainScene"), 10, _enc("SwarmUnit"))
-    count = engine_swig.scene_object_count(scene)
+    engineswig.engine_mass_spawn(engine, _enc("MainScene"), 10, _enc("SwarmUnit"))
+    count = engineswig.scene_object_count(scene)
     print(f"[demo] After mass spawn, scene has {count} objects")
 
     # Update loop
     print()
     for i in range(3):
-        engine_swig.engine_update(engine, 0.016)
+        engineswig.engine_update(engine, 0.016)
         print(f"[demo] --- tick {i} ---")
     print()
 
     # Shutdown
-    engine_swig.engine_shutdown(engine)
-    engine_swig.engine_destroy(engine)
+    engineswig.engine_shutdown(engine)
+    engineswig.engine_destroy(engine)
     print("[demo] Engine shutdown complete")
     print("\n[DONE] SWIG demo passed")
 

@@ -4,7 +4,7 @@
 // SWIG 4.x maps char* ↔ Python bytes by default. To keep things simple we
 // stay with that behaviour and let demo.py handle encode/decode.
 
-%module engine_swig
+%module engineswig
 
 // Generate Python docstrings from C function signatures.
 %feature("autodoc", "1");

@@ -70,12 +70,12 @@ def gen_cython(module_dir):
 def gen_swig(module_dir):
     """SWIG has no dedicated .pyi tool.
 
-    The SWIG-generated wrapper is installed as engine_swig/__init__.py.
-    _engine_swig.pyd sits alongside the package directory (at the PYTHONPATH
-    root) so the wrapper's absolute 'import _engine_swig' resolves.
+    The SWIG-generated wrapper is installed as engineswig/__init__.py.
+    _engineswig.pyd sits alongside the package directory (at the PYTHONPATH
+    root) so the wrapper's absolute 'import _engineswig' resolves.
 
     We attempt mypy stubgen with PYTHONPATH set to the packages root
-    (one level above the package) so both the package and _engine_swig.pyd
+    (one level above the package) so both the package and _engineswig.pyd
     are importable.
     """
     packages_root = os.path.dirname(module_dir)
@@ -85,13 +85,13 @@ def gen_swig(module_dir):
 
     result = _run([
         stubgen_exe,
-        "-m", "engine_swig",
+        "-m", "engineswig",
         "-o", packages_root,
     ], env={**os.environ, "PYTHONPATH": packages_root})
 
     if result.returncode != 0:
         print("  [stubs] mypy stubgen failed for SWIG (expected — SWIG wrapper uses absolute import)")
-        print("  [stubs] Instead, read engine_swig/__init__.py or use help(engine_swig).")
+        print("  [stubs] Instead, read engineswig/__init__.py or use help(engineswig).")
 
     marker = os.path.join(module_dir, "py.typed")
     open(marker, "w").close()

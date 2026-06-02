@@ -55,7 +55,7 @@ set_target_properties(_core_cython PROPERTIES
   OUTPUT_NAME "_core_cython"
 )
 
-set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engine_cython")
+set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/enginecython")
 
 add_custom_command(TARGET _core_cython POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"
@@ -65,7 +65,7 @@ add_custom_command(TARGET _core_cython POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/python/__init__.py"
     "${_pkg}/"
-  COMMENT "Cython: assembling package engine_cython/"
+  COMMENT "Cython: assembling package enginecython/"
 )
 
 add_custom_command(TARGET _core_cython POST_BUILD

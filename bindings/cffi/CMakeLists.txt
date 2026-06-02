@@ -16,7 +16,7 @@ set_target_properties(engine_c PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/_build/cffi"
 )
 
-set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engine_cffi")
+set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/enginecffi")
 
 add_custom_command(TARGET engine_c POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"
@@ -32,7 +32,7 @@ add_custom_command(TARGET engine_c POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/python/__init__.py"
     "${_pkg}/"
-  COMMENT "CFFI: assembling package engine_cffi/"
+  COMMENT "CFFI: assembling package enginecffi/"
 )
 
 add_custom_command(TARGET engine_c POST_BUILD

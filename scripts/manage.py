@@ -247,7 +247,7 @@ def cmd_build(args):
 
 
 def _find_packages_root():
-    """Return the directory containing all engine_* package directories.
+    """Return the directory containing all engine* package directories.
 
     With single-config generators (Ninja, Make) the packages land directly in
     dist/.  Multi-config generators (VS, Xcode) append a
@@ -255,15 +255,15 @@ def _find_packages_root():
     the most likely candidate so PYTHONPATH is set correctly.
 
     After the native-package restructure, each scheme is a proper Python
-    package (e.g. engine_pybind/__init__.py + _core.pyd).  We look for
-    directories named engine_* that contain __init__.py.
+    package (e.g. enginepybind/__init__.py + _core.pyd).  We look for
+    directories named engine* that contain __init__.py.
     """
     base = DIST_DIR  # dist/
 
     # Single-config: packages are directly in dist/
     try:
         for entry in os.listdir(base):
-            if entry.startswith("engine_") and os.path.isdir(os.path.join(base, entry)):
+            if entry.startswith("engine") and os.path.isdir(os.path.join(base, entry)):
                 pkg_init = os.path.join(base, entry, "__init__.py")
                 if os.path.isfile(pkg_init):
                     return base
@@ -278,7 +278,7 @@ def _find_packages_root():
             if not os.path.isdir(sub):
                 continue
             for sub_entry in os.listdir(sub):
-                if (sub_entry.startswith("engine_")
+                if (sub_entry.startswith("engine")
                         and os.path.isdir(os.path.join(sub, sub_entry))):
                     pkg_init = os.path.join(sub, sub_entry, "__init__.py")
                     if os.path.isfile(pkg_init):
@@ -342,7 +342,7 @@ def cmd_package(args):
 
     packages_root = os.path.join(DIST_DIR, config) if config else DIST_DIR
     if not os.path.isdir(packages_root) or not any(
-        d.startswith("engine_") for d in os.listdir(packages_root)
+        d.startswith("engine") for d in os.listdir(packages_root)
         if os.path.isdir(os.path.join(packages_root, d))
     ):
         print("[package] No built packages found in {}.".format(packages_root),

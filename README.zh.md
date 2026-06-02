@@ -6,10 +6,10 @@
 
 | 方案 | 方式 | 模块名 |
 |------|------|--------|
-| **pybind11** | 头文件绑定，通过 `PYBIND11_MODULE` 宏 | `engine_pybind` |
-| **nanobind** | pybind11 作者的下一代重写 | `engine_nanobind` |
-| **SWIG** | `.i` 接口文件自动生成粘合代码 | `engine_swig` |
-| **Cython** | `.pyx` → 编译为 C 扩展 | `engine_cython` |
+| **pybind11** | 头文件绑定，通过 `PYBIND11_MODULE` 宏 | `enginepybind` |
+| **nanobind** | pybind11 作者的下一代重写 | `enginenanobind` |
+| **SWIG** | `.i` 接口文件自动生成粘合代码 | `engineswig` |
+| **Cython** | `.pyx` → 编译为 C 扩展 | `enginecython` |
 | **CFFI + ctypes** | 纯 C `extern "C"` ABI | `cffi_bridge` |
 
 ## 快速开始
@@ -33,11 +33,11 @@ python scripts/manage.py tidy
 
 ```
 dist/Debug/
-├── engine_pybind/      # import engine_pybind
-├── engine_nanobind/    # import engine_nanobind
-├── engine_swig/        # import engine_swig
-├── engine_cython/      # import engine_cython
-└── engine_cffi/        # import engine_cffi
+├── enginepybind/      # import enginepybind
+├── enginenanobind/    # import enginenanobind
+├── engineswig/        # import engineswig
+├── enginecython/      # import enginecython
+└── enginecffi/        # import enginecffi
 ```
 
 每个包都是标准的 Python 模块 — `__init__.py` 公开接口 + 内部 `_core` C 扩展 + `.pyi` 类型存根。
@@ -55,8 +55,8 @@ python
 ```
 
 ```python
->>> import engine_pybind
->>> engine = engine_pybind.Engine()
+>>> import enginepybind
+>>> engine = enginepybind.Engine()
 >>> engine.init('{"app":"demo"}')
 >>> engine.update(0.016)
 >>> engine.shutdown()
@@ -69,7 +69,7 @@ python
 python scripts/manage.py package --config Release
 python scripts/manage.py package --scheme pybind11 --config Release
 
-# 产物: dist/engine_pybind-0.1.0.zip, dist/engine_nanobind-0.1.0.zip, ...
+# 产物: dist/enginepybind-0.1.0.zip, dist/enginenanobind-0.1.0.zip, ...
 ```
 
 ## 构建单个方案

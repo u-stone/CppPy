@@ -5,8 +5,8 @@ The compiled C extension is _core.pyd; this __init__.py re-exports the
 public API so users get a clean package interface.
 
 Usage:
-    import engine_cython
-    engine = engine_cython.Engine()
+    import enginecython
+    engine = enginecython.Engine()
     engine.init('{"app":"demo"}')
     ...
 """

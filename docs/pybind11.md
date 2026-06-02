@@ -45,14 +45,14 @@ endif()
 
 ```cmake
 # bindings/pybind11/CMakeLists.txt — 仅 14 行
-pybind11_add_module(engine_pybind src/pybind11_bindings.cpp)
+pybind11_add_module(enginepybind src/pybind11_bindings.cpp)
 
-target_link_libraries(engine_pybind PRIVATE engine)
-target_include_directories(engine_pybind PRIVATE
+target_link_libraries(enginepybind PRIVATE engine)
+target_include_directories(enginepybind PRIVATE
   ${CMAKE_SOURCE_DIR}/engine/include
 )
 
-set_target_properties(engine_pybind PROPERTIES
+set_target_properties(enginepybind PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/_build/pybind11"
   OUTPUT_NAME "_core_pybind11"
 )
@@ -79,7 +79,7 @@ PYBIND11_MODULE(_core, m) {
 }
 ```
 
-编译后，`import engine_pybind` 即可在 Python 中加载该模块。
+编译后，`import enginepybind` 即可在 Python 中加载该模块。
 
 ### 类绑定机制
 
@@ -239,10 +239,10 @@ Pybind11 绑定文件 `pybind11_bindings.cpp` 共 110 行，绑定了 EngineFaca
 绑定完成后的 Python API 与原生 Python 类完全一致：
 
 ```python
-import engine_pybind
+import enginepybind
 
 # 实例化就像使用普通 Python 类
-engine = engine_pybind.Engine()
+engine = enginepybind.Engine()
 engine.init('{"app": "pybind11_demo"}')
 
 # 成员函数调用，支持关键字参数
@@ -261,8 +261,8 @@ for obj in scene.all_objects:
 
 # 继承关系正确映射
 t = player.add_transform()
-print(isinstance(t, engine_pybind.Component))  # True
-print(isinstance(t, engine_pybind.Transform))  # True
+print(isinstance(t, enginepybind.Component))  # True
+print(isinstance(t, enginepybind.Transform))  # True
 ```
 
 ### 优点总结
@@ -291,10 +291,10 @@ python scripts/manage.py setup              # 创建 venv，安装依赖，cmake
 python scripts/manage.py build              # 编译所有方案（或 --scheme pybind11 单独编译）
 ```
 
-编译产物位于 `dist/<Config>/engine_pybind/`：
+编译产物位于 `dist/<Config>/enginepybind/`：
 
 ```
-dist/Debug/engine_pybind/        # Debug 构建（或 dist/Release/）
+dist/Debug/enginepybind/        # Debug 构建（或 dist/Release/）
 ├── __init__.py                  # from ._core import Engine, Scene, ...
 ├── _core.cp312-win_amd64.pyd    # 内部 C 扩展
 ├── _core.pyi                    # 类型存根（IDE 自动补全）
@@ -321,9 +321,9 @@ set PYTHONPATH=.\dist\Debug
 ### 使用
 
 ```python
-import engine_pybind
+import enginepybind
 
-engine = engine_pybind.Engine()
+engine = enginepybind.Engine()
 engine.init('{"app": "demo"}')
 engine.update(0.016)
 engine.shutdown()
@@ -333,7 +333,7 @@ engine.shutdown()
 
 ```bash
 python scripts/manage.py package --scheme pybind11 --config Release
-# 产物: dist/engine_pybind-0.1.0.zip
+# 产物: dist/enginepybind-0.1.0.zip
 # 用户解压后将目录加入 PYTHONPATH 即可使用
 ```
 
@@ -345,19 +345,19 @@ pybind11 绑定编译后产生以下文件：
 
 | 文件 | 说明 |
 |------|------|
-| `engine_pybind/__init__.py` | 包入口，执行 `from ._core import *` 重导出公开 API |
-| `engine_pybind/_core.*.pyd` | 内部 C 扩展模块（以下划线前缀隐藏，用户不应直接导入） |
-| `engine_pybind/_core.pyi` | 类型存根文件，由 `pybind11-stubgen` 自动生成 |
-| `engine_pybind/py.typed` | PEP 561 标记文件 |
+| `enginepybind/__init__.py` | 包入口，执行 `from ._core import *` 重导出公开 API |
+| `enginepybind/_core.*.pyd` | 内部 C 扩展模块（以下划线前缀隐藏，用户不应直接导入） |
+| `enginepybind/_core.pyi` | 类型存根文件，由 `pybind11-stubgen` 自动生成 |
+| `enginepybind/py.typed` | PEP 561 标记文件 |
 
 ### Python 如何发现和加载 .pyd
 
-Python 的 `import engine_pybind` 按以下顺序搜索模块：
+Python 的 `import enginepybind` 按以下顺序搜索模块：
 
 1. `sys.path` 中的目录（包括 `PYTHONPATH` 环境变量指定的路径）
-2. Python 在 `engine_pybind/` 目录中找到 `__init__.py`，执行其中的 `from ._core import *`，从而找到 `_core.*.pyd`
+2. Python 在 `enginepybind/` 目录中找到 `__init__.py`，执行其中的 `from ._core import *`，从而找到 `_core.*.pyd`
 
-CppPy 将所有产物输出到 `dist/<config>/engine_pybind/`，通过 `scripts/manage.py run` 自动设置 `PYTHONPATH` 指向 `dist/<config>/`。在多配置生成器（Visual Studio / Xcode）下，`<config>` 为 `Debug` 或 `Release`；单配置生成器下 `dist/` 直接包含包目录。
+CppPy 将所有产物输出到 `dist/<config>/enginepybind/`，通过 `scripts/manage.py run` 自动设置 `PYTHONPATH` 指向 `dist/<config>/`。在多配置生成器（Visual Studio / Xcode）下，`<config>` 为 `Debug` 或 `Release`；单配置生成器下 `dist/` 直接包含包目录。
 
 `manage.py` 中的 `_find_packages_root()` 函数负责探测实际的模块输出目录：
 
@@ -380,7 +380,7 @@ pybind11 无原生 `.pyi` 支持，使用第三方工具 `pybind11-stubgen`：
 
 ```bash
 pip install pybind11-stubgen
-pybind11-stubgen engine_pybind -o <output_dir>/
+pybind11-stubgen enginepybind -o <output_dir>/
 ```
 
 在 CppPy 中，存根生成作为 CMake POST_BUILD 步骤自动执行（参见 `bindings/pybind11/CMakeLists.txt`），由 `scripts/generate_stubs.py` 调度。
@@ -396,7 +396,7 @@ pybind11-stubgen engine_pybind -o <output_dir>/
 - 参数类型提示（部分方法）
 - 属性列表浏览
 
-用户也可以手动阅读 `engine_pybind.pyi` 文件来了解完整的 API 表面。
+用户也可以手动阅读 `enginepybind.pyi` 文件来了解完整的 API 表面。
 
 ## 适用场景推荐
 

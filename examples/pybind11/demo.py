@@ -2,7 +2,7 @@
 """examples/pybind11/demo.py — pybind11 binding reference implementation.
 
 VS Code users: the .vscode/settings.json already configures PYTHONPATH so
-'import engine_pybind' works directly without any path manipulation.
+'import enginepybind' works directly without any path manipulation.
 
 Terminal users: run via 'manage.py run' or 'PYTHONPATH=dist/Debug python ...'.
 """
@@ -10,7 +10,7 @@ Terminal users: run via 'manage.py run' or 'PYTHONPATH=dist/Debug python ...'.
 import os, sys
 
 try:
-    import engine_pybind  # works when PYTHONPATH is set (VS Code / manage.py)
+    import enginepybind  # works when PYTHONPATH is set (VS Code / manage.py)
 except ImportError:
     # Fallback: auto-detect dist/ directory for bare terminal runs
     _d = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
@@ -22,7 +22,7 @@ except ImportError:
         ):
             sys.path.insert(0, _p)
             break
-    import engine_pybind
+    import enginepybind
 
 
 def main():
@@ -30,7 +30,7 @@ def main():
     print("  CppPy — pybind11 Demo")
     print("=" * 50)
 
-    engine = engine_pybind.Engine()
+    engine = enginepybind.Engine()
     print("[demo] Engine created")
 
     engine.init('{"app": "pybind11_demo"}')
