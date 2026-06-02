@@ -6,6 +6,9 @@
 
 %module engine_swig
 
+// Generate Python docstrings from C function signatures.
+%feature("autodoc", "1");
+
 %begin %{
 #define SWIG_PYTHON_STRICT_BYTE_CHAR
 %}

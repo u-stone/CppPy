@@ -34,6 +34,10 @@ PYTHON_REQUIREMENTS = [
     "cython>=3.0.0",
     "black>=24.0.0",
     "flake8>=7.0.0",
+    # Stub generation tools
+    "pybind11-stubgen>=2.5.0",
+    "stubgen-pyx>=0.1.0",
+    "mypy>=1.8.0",
 ]
 
 

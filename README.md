@@ -84,6 +84,8 @@ Each binding scheme has a detailed technical document in `docs/`:
 
 Each document covers: underlying mechanism, dependency setup, code walkthrough with annotations, implementation complexity analysis, ease-of-use evaluation, and use case recommendations.
 
+**[docs/troubleshooting.md](docs/troubleshooting.md)** — 踩坑记录与解决方案：Debug 构建链接错误、多配置生成器路径问题、VS IDE 头文件显示等常见问题及解决办法。
+
 中文文档请参阅 [README.zh.md](README.zh.md)。
 
 ## License

@@ -296,6 +296,65 @@ cmake --build . --target engine_pybind
 PYTHONPATH="bindings_output/pybind11" python ../examples/pybind11/demo.py
 ```
 
+## 物理文件与 Python 类型存根 (`.pyi`)
+
+### 产物物理文件
+
+pybind11 绑定编译后产生以下文件：
+
+| 文件 | 说明 |
+|------|------|
+| `engine_pybind.cp312-win_amd64.pyd` (Windows) / `engine_pybind.cpython-312-x86_64-linux-gnu.so` (Linux) | 编译后的 Python C 扩展模块。这是一个动态链接库，Python `import` 语句通过 CPython 的 `importlib` 加载机制找到并加载它 |
+| `engine_pybind.pyi` | 类型存根文件，由 `pybind11-stubgen` 自动生成 |
+
+### Python 如何发现和加载 .pyd
+
+Python 的 `import engine_pybind` 按以下顺序搜索模块：
+
+1. `sys.path` 中的目录（包括 `PYTHONPATH` 环境变量指定的路径）
+2. 对于 C 扩展，Python 查找命名模式为 `engine_pybind.*.pyd` 或 `engine_pybind.pyd` 的文件
+
+CppPy 将所有产物输出到 `build/bindings_output/pybind11/<config>/`，通过 `scripts/manage.py run` 自动设置 `PYTHONPATH` 指向该目录。在多配置生成器（Visual Studio / Xcode）下，路径包含配置子目录（如 `Debug/` 或 `Release/`）。
+
+`manage.py` 中的 `_find_module_dir()` 函数负责探测实际的模块输出目录：
+
+```python
+def _find_module_dir(scheme):
+    base = os.path.join(BINDINGS_OUTPUT, scheme)
+    # 若基础目录直接包含 .pyd/.dll/.so → 单配置生成器 (Ninja)
+    for entry in os.listdir(base):
+        if entry.endswith((".pyd", ".dll", ".so")):
+            return base
+    # 否则搜索子目录 → 多配置生成器 (VS, Xcode)
+    # 返回最近修改过的子目录
+    ...
+    # 回退: Release > Debug > RelWithDebInfo > MinSizeRel
+```
+
+### 类型存根生成
+
+pybind11 无原生 `.pyi` 支持，使用第三方工具 `pybind11-stubgen`：
+
+```bash
+pip install pybind11-stubgen
+pybind11-stubgen engine_pybind -o <output_dir>/
+```
+
+在 CppPy 中，存根生成作为 CMake POST_BUILD 步骤自动执行（参见 `bindings/pybind11/CMakeLists.txt`），由 `scripts/generate_stubs.py` 调度。
+
+**生成质量**：`pybind11-stubgen` 基于运行时自省（`help()` / docstring 解析），对纯 Python 类型（`int`, `str`, `bool`）准确率较高，但对 C++ 模板类型（如 `engine::Scene`, `std::shared_ptr<engine::GameObject>`）会退化为 `...`（Ellipsis）。这是因为 pybind11 生成的 docstring 中包含 C++ 原始类型名，stubgen 无法将其映射回 Python 类型。
+
+**改进建议**：在 pybind11 绑定代码中为每个 `py::class_` 添加 `py::doc()` 提供自定义 docstring，避免 C++ 类型名泄露到 Python 端。
+
+### 用户可见效果
+
+生成 `.pyi` 后，用户在 IDE 中编写代码时可获得：
+- 方法名自动补全
+- 参数类型提示（部分方法）
+- 属性列表浏览
+
+用户也可以手动阅读 `engine_pybind.pyi` 文件来了解完整的 API 表面。
+
 ## 适用场景推荐
 
 Pybind11 最适合以下场景：

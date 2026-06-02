@@ -583,6 +583,64 @@ cmake --build . --target engine_c
 PYTHONPATH="bindings_output/cffi" python ../examples/cffi/demo.py
 ```
 
+## 物理文件与 Python 类型存根 (`.pyi`)
+
+### 产物物理文件
+
+CFFI/ctypes 方案的产物结构与其他 4 种方案有本质区别——它不生成 Python C 扩展模块，而是：
+
+| 文件 | 类型 | 说明 |
+|------|------|------|
+| `engine_c.dll` (Windows) / `libengine_c.so` (Linux) | **纯 C 共享库** | 编译自 `cffi_c_impl.cpp`，只使用 `extern "C"` ABI。不是一个 Python 模块，而是一个普通的动态链接库 |
+| `cffi_bridge.py` | **纯 Python 代码** | 手写的 Pythonic OOP 包装器，通过 `ctypes.CDLL()` 加载 DLL，然后定义类（Engine, Scene, GameObject, Component）来封装 C 函数调用 |
+| `cffi_bridge.pyi` | **手写类型存根** | 手工维护的 `.pyi` 文件，与 `cffi_bridge.py` 中的 Python 类签名一一对应 |
+| `py.typed` | PEP 561 标记 | 告知类型检查器此包有类型信息 |
+
+### Python 如何发现和加载
+
+```
+用户代码: import cffi_bridge (将 cffi_bridge.py 所在目录加入 PYTHONPATH)
+  └─ cffi_bridge.py: _lib_dir = os.path.dirname(__file__)
+       └─ ctypes.CDLL(os.path.join(_lib_dir, "engine_c.dll"))
+            └─ Windows LoadLibrary() 加载 engine_c.dll
+                 └─ _lib.engine_create() 调用 C 函数
+```
+
+**关键点**：`cffi_bridge.py` 通过 `os.path.dirname(__file__)` 确定自己的目录，然后在同目录下搜索 `engine_c.dll`。因此 **`.py` 和 `.dll` 必须在同一目录**。在多配置生成器下，CppPy 使用 `$<TARGET_FILE_DIR:engine_c>` 确保两者都被复制到相同的配置子目录。
+
+### 类型存根：手写方案
+
+CFFI/ctypes 是所有 5 种方案中**唯一没有任何自动化存根生成的方案**。解决方案是手工编写并维护 `cffi_bridge.pyi` 文件：
+
+```python
+# bindings/cffi/python/cffi_bridge.pyi（手工维护）
+class Engine:
+    def __init__(self, config_json: str = "{}") -> None: ...
+    def init(self, config_json: str = "{}") -> bool: ...
+    def shutdown(self) -> None: ...
+    def update(self, dt: float) -> None: ...
+    def create_scene(self, name: str) -> Optional[Scene]: ...
+
+class Scene:
+    def create_object(self, name: str) -> Optional[GameObject]: ...
+    @property
+    def object_count(self) -> int: ...
+```
+
+**维护原则**：
+- `.pyi` 文件是 `cffi_bridge.py` 的类型级镜像，不含实现
+- 当 `cffi_bridge.py` 的公开 API 变化时，必须同步更新 `.pyi`
+- 使用 `...`（Ellipsis）作为方法体，告诉类型检查器"签名仅用于检查"
+- 搭配 `py.typed` 标记文件使 PEP 561 生效
+
+**为什么不自动生成**：ctypes 的类型系统在运行时才能确定（`argtypes` / `restype` 是运行时属性），没有编译期类型信息可供提取。CFFI 的 `ffi.cdef()` 有类型声明，但 CppPy 的 ctypes 路径不经过 CFFI 的 builder。
+
+### 用户可见效果
+
+- IDE 在用户 `import cffi_bridge` 时读取 `.pyi` 获得完整的类型提示
+- 与手写纯 Python 库的体验一致
+- 需要开发者手动维护来回同步 `.py` 和 `.pyi`——这是 CFFI/ctypes 的固有代价
+
 ## 适用场景推荐
 
 CFFI + C API 最适合以下场景：

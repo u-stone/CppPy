@@ -410,6 +410,70 @@ cmake --build . --target engine_swig
 PYTHONPATH="bindings_output/swig" python ../examples/swig/demo.py
 ```
 
+## 物理文件与 API 文档
+
+### 产物物理文件
+
+SWIG 方案产生**两个**关键文件：
+
+| 文件 | 类型 | 说明 |
+|------|------|------|
+| `_engine_swig.pyd` (Windows) / `_engine_swig.so` (Linux) | **二进制** C 扩展模块 | SWIG 编译生成的粘合代码，包含实际的 C 函数调用逻辑。以下划线开头表示它是内部实现模块 |
+| `engine_swig.py` | **纯 Python** 包装文件 | SWIG 自动生成的纯 Python 模块，包含函数签名、docstring、类型转换逻辑。**可直接阅读** |
+
+### Python 如何发现和加载
+
+当用户 `import engine_swig` 时：
+
+1. Python 在 `PYTHONPATH` 中找到 `engine_swig.py`（纯 Python 包装器）
+2. `engine_swig.py` 内部执行 `import _engine_swig`（绝对导入）
+3. Python 在同一目录中找到 `_engine_swig.pyd` 并加载
+
+因此**两个文件必须在同一目录**。在多配置生成器下，CppPy 使用 `$<TARGET_FILE_DIR:engine_swig>` 生成器表达式确保包装 `.py` 被复制到与 `.pyd` 相同的配置子目录。
+
+### API 文档方案
+
+SWIG 本身不生成 `.pyi` 类型存根。但有三种互补的方式提供 API 文档：
+
+#### 方式一：SWIG 自动 docstring（已启用）
+
+在 `.i` 文件中添加 `%feature("autodoc", "1")` 后，生成的 `engine_swig.py` 自带函数签名 docstring：
+```python
+# engine_swig.py (生成结果)
+def engine_create_and_init(config_json):
+    r"""engine_create_and_init(char const * config_json) -> void *"""
+    return _engine_swig.engine_create_and_init(config_json)
+```
+
+用户可以在 Python 终端使用 `help(engine_swig)` 查看。
+
+#### 方式二：直接阅读 engine_swig.py（推荐）
+
+`engine_swig.py` 本身是纯 Python 代码，人类可读。所有暴露的函数都在文件中清晰列出。用户可以用任何编辑器打开浏览 API。
+
+#### 方式三：mypy stubgen（有限支持）
+
+CppPy 尝试使用 mypy 的 `stubgen` 为 SWIG 模块生成 `.pyi`：
+```bash
+stubgen -m engine_swig -o <output_dir>/
+```
+但 SWIG 包装器的绝对导入 `import _engine_swig` 会导致 stubgen 报错：`No parent module -- cannot perform relative import`。这是 SWIG 生成的包装器结构导致的已知限制。因此 CppPy 不依赖 stubgen，而是创建 `py.typed` 标记文件并建议用户直接阅读 `engine_swig.py`。
+
+#### 方式四：Doxygen 注释传递（可选）
+
+如果 C 头文件中有 Doxygen 注释，SWIG 支持通过 `-doxygen` 标志将其转换为 Python docstring：
+```swig
+// 在 .i 文件中
+%feature("autodoc", "1");  // 生成函数签名 docstring
+// 编译时: swig -c++ -python -doxygen engine.i
+```
+
+### 用户可见效果
+
+- `help(engine_swig)` 显示所有导出函数的签名列表
+- `engine_swig.py` 可直接在编辑器中打开以浏览完整 API
+- `py.typed` 标记文件告知类型检查器此包有类型信息
+
 ## 适用场景推荐
 
 SWIG 最适合以下场景：

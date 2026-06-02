@@ -19,3 +19,12 @@ set_target_properties(engine_pybind PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/pybind11"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/pybind11"
 )
+
+# Generate .pyi type stubs via pybind11-stubgen (runtime introspection).
+add_custom_command(TARGET engine_pybind POST_BUILD
+  COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_SOURCE_DIR}/scripts/generate_stubs.py
+    --scheme pybind11
+    --module-dir "$<TARGET_FILE_DIR:engine_pybind>"
+  COMMENT "pybind11: generating .pyi stubs"
+)

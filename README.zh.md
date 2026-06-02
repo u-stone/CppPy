@@ -85,6 +85,8 @@ CppPy/
 
 每篇文档均包含：底层机制解析、依赖环境搭建、带注释的代码走读、实现复杂度分析、易用性评估及适用场景推荐。
 
+**[docs/troubleshooting.md](docs/troubleshooting.md)** —— 踩坑记录与解决方案：Debug 构建链接错误、多配置生成器路径问题、VS IDE 头文件显示等常见问题及解决办法。
+
 ## 引擎核心设计
 
 ### EngineFacade（门面类）

@@ -18,3 +18,12 @@ set_target_properties(engine_nanobind PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/nanobind"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/nanobind"
 )
+
+# Generate .pyi type stubs (nanobind built-in, reads __nb_signature__).
+add_custom_command(TARGET engine_nanobind POST_BUILD
+  COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_SOURCE_DIR}/scripts/generate_stubs.py
+    --scheme nanobind
+    --module-dir "$<TARGET_FILE_DIR:engine_nanobind>"
+  COMMENT "nanobind: generating .pyi stubs"
+)

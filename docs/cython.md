@@ -395,6 +395,55 @@ cmake --build . --target engine_cython
 PYTHONPATH="bindings_output/cython" python ../examples/cython/demo.py
 ```
 
+## 物理文件与 Python 类型存根 (`.pyi`)
+
+### 产物物理文件
+
+Cython 绑定编译后产生以下文件：
+
+| 文件 | 说明 |
+|------|------|
+| `engine_cython.pyd` (Windows) / `engine_cython.so` (Linux) | 编译后的 C 扩展模块。Cython 将 `.pyx` + `.pxd` 编译为 `.cxx`，再由 C++ 编译器生成动态链接库 |
+| `engine_cython.pyi` | 类型存根文件，由 `stubgen-pyx` 从 Cython 源码 AST 生成 |
+
+Cython 构建过程：`.pyx` → (`cython --cplus -3`) → `.cxx` → (C++ 编译器) → `.pyd`
+
+### Python 如何发现和加载
+
+Python 通过 `PYTHONPATH` 搜索 `engine_cython.pyd`（或 `.so`），加载后直接提供 `.pyx` 中定义的 Python 类（`cdef class` 声明的类在运行时表现为普通 Python 类）。
+
+### 类型存根生成
+
+Cython 编译器本身不输出 `.pyi` 文件，使用第三方工具 `stubgen-pyx`：
+
+```bash
+pip install stubgen-pyx
+stubgen-pyx bindings/cython/src/ --output-dir <output_dir>/
+```
+
+在 CppPy 中作为 CMake POST_BUILD 步骤自动执行（`scripts/generate_stubs.py`）。
+
+**原理**：`stubgen-pyx` 解析 Cython 的 `.pyx` 和 `.pxd` 源文件 AST，而非运行时自省。因此能正确识别 Cython 特有类型：
+
+| Cython 类型 | 映射为 Python 类型 |
+|-------------|-------------------|
+| `bint` | `bool` |
+| `int` (Cython) | `int` |
+| `float` (Cython) | `float` |
+| `const_char` | `str` |
+| `object` | `Any` |
+| `EngineHandle` (opaque) | `Any` |
+
+**生成质量**：好于 pybind11-stubgen（因为能读取 Cython AST 中的类型声明），但不如 nanobind（因为 `.pyx` 中的类型声明可能不完整，特别是 `cdef` 方法默认不暴露类型）。生成后的 `.pyi` 中部分参数可能无类型注解（如 `def create_scene(self, name)` 中的 `name` 无类型提示）。
+
+**改进建议**：在 `.pyx` 文件中为 `def` 和 `cpdef` 方法添加完整的 Python 类型注解，stubgen-pyx 会原样保留。
+
+### 用户可见效果
+
+- IDE 自动补全：`engine_cython.Engine()` 创建实例后，IDE 可提示 `init()`, `update(dt)`, `create_scene(name)` 等方法
+- 类型检查：mypy / pyright 可以读取 `.pyi` 进行基础类型检查
+- 注意：通过 `cdef` 返回的 opaque 句柄（如 `EngineHandle`）在存根中表现为 `Any`，用户需参考文档了解实际类型
+
 ## 适用场景推荐
 
 Cython 最适合以下场景：

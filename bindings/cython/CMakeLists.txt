@@ -57,3 +57,12 @@ set_target_properties(engine_cython PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/cython"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/cython"
 )
+
+# Generate .pyi type stubs via stubgen-pyx (Cython AST-based).
+add_custom_command(TARGET engine_cython POST_BUILD
+  COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_SOURCE_DIR}/scripts/generate_stubs.py
+    --scheme cython
+    --module-dir "$<TARGET_FILE_DIR:engine_cython>"
+  COMMENT "Cython: generating .pyi stubs"
+)

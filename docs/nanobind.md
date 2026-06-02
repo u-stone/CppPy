@@ -324,6 +324,61 @@ cmake --build . --target engine_nanobind
 PYTHONPATH="bindings_output/nanobind" python ../examples/nanobind/demo.py
 ```
 
+## 物理文件与 Python 类型存根 (`.pyi`)
+
+### 产物物理文件
+
+nanobind 绑定编译后产生以下文件：
+
+| 文件 | 说明 |
+|------|------|
+| `engine_nanobind.cp312-win_amd64.pyd` (Windows) / `engine_nanobind.abi3.so` (Linux) | 编译后的 Python C 扩展模块 |
+| `engine_nanobind.pyi` | **原生**类型存根，由 nanobind 内置的 `nanobind.stubgen` 生成（非第三方工具） |
+| `py.typed` | PEP 561 标记文件，告知类型检查器此包有内联类型信息 |
+
+### Python 如何发现和加载 .pyd
+
+与 pybind11 相同，Python 通过 `PYTHONPATH` 和 `sys.path` 搜索 `.pyd`/`.so` 文件。详见 pybind11 文档中的说明。
+
+### 类型存根生成（原生支持）
+
+nanobind 是所有 5 种方案中**唯一内置原生 `.pyi` 生成的方案**。它不依赖第三方工具或启发式推断——而是直接读取绑定时注册的结构化 `__nb_signature__` 信息：
+
+```bash
+python -m nanobind.stubgen -m engine_nanobind -O <output_dir>/
+```
+
+在 CppPy 中通过 `scripts/generate_stubs.py` 调用：
+```python
+# nanobind.stubgen 读取 __nb_signature__，无需启发式推断
+subprocess.run([python, "-m", "nanobind.stubgen",
+    "-m", "engine_nanobind",
+    "-O", module_dir])
+```
+
+**生成质量对比**：
+
+| 方案 | 工具 | 原理 | `create_scene` 返回类型 |
+|------|------|------|------------------------|
+| nanobind | 内置 `nanobind.stubgen` | 读取 `__nb_signature__` | `Scene` ✅ |
+| pybind11 | `pybind11-stubgen` | docstring 解析 | `...` (Ellipsis) ❌ |
+| Cython | `stubgen-pyx` | `.pyx` AST 解析 | 取决于 `.pyx` 中的类型声明 |
+
+nanobind 的存根是唯一能正确解析所有返回类型而不产生 `...` 的方案，这是因为它使用结构化签名数据而非启发式推断。
+
+### 用户可见效果
+
+生成了 `engine_nanobind.pyi` + `py.typed` 后，用户可以在 VS Code / PyCharm 中获得完整的自动补全和类型检查：
+
+```python
+import engine_nanobind
+engine = engine_nanobind.Engine()
+engine.  # IDE 提示: init(config_json: str = '{}') -> bool
+         #             create_scene(name: str) -> Scene
+         #             update(dt: float) -> None
+         #             ...
+```
+
 ## 适用场景推荐
 
 Nanobind 最适合以下场景：

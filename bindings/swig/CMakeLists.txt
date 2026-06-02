@@ -58,4 +58,9 @@ add_custom_command(TARGET engine_swig POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_BINARY_DIR}/engine_swig.py"
     "$<TARGET_FILE_DIR:engine_swig>/"
+  COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_SOURCE_DIR}/scripts/generate_stubs.py
+    --scheme swig
+    --module-dir "$<TARGET_FILE_DIR:engine_swig>"
+  COMMENT "SWIG: generating .pyi stubs via mypy stubgen"
 )
