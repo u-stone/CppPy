@@ -335,6 +335,34 @@ def cmd_run(args):
         sys.exit(1)
 
 
+def cmd_package(args):
+    """Bundle pre-compiled packages from dist/ into distributable archives."""
+    config = getattr(args, "config", None) or "Release"
+    scheme = args.scheme
+
+    packages_root = os.path.join(DIST_DIR, config) if config else DIST_DIR
+    if not os.path.isdir(packages_root) or not any(
+        d.startswith("engine_") for d in os.listdir(packages_root)
+        if os.path.isdir(os.path.join(packages_root, d))
+    ):
+        print("[package] No built packages found in {}.".format(packages_root),
+              file=sys.stderr)
+        print("[package] Run 'build' first.", file=sys.stderr)
+        sys.exit(1)
+
+    print("[package] Packaging from {} ...".format(packages_root))
+    python = _get_venv_python() if os.path.exists(_get_venv_python()) else sys.executable
+    script = os.path.join(PROJECT_ROOT, "scripts", "package_wheel.py")
+    pkg_args = [python, script, "--config", config, "--all"]
+    if scheme:
+        pkg_args = ["--scheme", scheme]
+    result = _run(pkg_args)
+    if result.returncode != 0:
+        print("[package] FAILED", file=sys.stderr)
+        sys.exit(1)
+    print("[package] Done.")
+
+
 def cmd_lint(args):
     """Run clang-format and flake8 checks."""
     print("[lint] Running clang-format check...")
@@ -563,6 +591,13 @@ def main():
     p_run.add_argument("--scheme", choices=ALL_SCHEMES,
                        help="Only run a specific scheme")
 
+    p_pkg = sub.add_parser("package", help="Build .whl distribution files")
+    p_pkg.add_argument("--scheme", choices=ALL_SCHEMES,
+                       help="Only package a specific scheme")
+    p_pkg.add_argument("--config", default="Release",
+                       choices=["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
+                       help="Build configuration to package (default: Release)")
+
     sub.add_parser("lint", help="Run clang-format and flake8 checks")
 
     sub.add_parser("tidy", help="Run clang-tidy")
@@ -574,6 +609,7 @@ def main():
         "setup": cmd_setup,
         "build": cmd_build,
         "run": cmd_run,
+        "package": cmd_package,
         "lint": cmd_lint,
         "tidy": cmd_tidy,
     }

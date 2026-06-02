@@ -559,14 +559,78 @@ CppPy 采用的"内部 C 扩展 `_core.pyd` + `__init__.py` 重导出"结构是 
 | **存根质量** | nanobind (原生 `__nb_signature__`) > pybind11 (docstring 解析) > Cython (AST) > SWIG (wrapper .py) > CFFI (手写) | ✅ |
 | **多配置生成器支持** | Visual Studio `Debug`/`Release` 子目录兼容 | ✅ |
 
-### 仍可改进的方向（非必需）
+### 最终交付形式
+
+CppPy 的编译产物以三种形式交付给用户：
+
+#### 形式一：`dist/<Config>/` 目录（开发阶段，推荐）
+
+编译完成后，`dist/Debug/` 或 `dist/Release/` 目录是**自包含的 Python 包集合**，用户只需将其加入 `PYTHONPATH`：
+
+```bash
+# Linux / macOS
+export PYTHONPATH="$(pwd)/dist/Debug"
+python -c "import engine_pybind; print(engine_pybind.Engine())"
+
+# Windows PowerShell
+$env:PYTHONPATH=".\dist\Debug"
+python -c "import engine_pybind; print(engine_pybind.Engine())"
+```
+
+这是最简单、最直接的交付方式，适合开发调试和内部分发。`dist/` 目录独立于 `build/`，可安全删除 `build/` 而不会丢失编译产物。
+
+#### 形式二：`.zip` 压缩包（分发阶段）
+
+通过 `manage.py package` 将每个包打包为独立的 `.zip` 文件：
+
+```bash
+python scripts/manage.py build --config Release
+python scripts/manage.py package --config Release
+# 产物: dist/engine_pybind-0.1.0.zip, dist/engine_nanobind-0.1.0.zip, ...
+```
+
+用户收到后：
+```bash
+unzip engine_pybind-0.1.0.zip -d /path/to/packages/
+export PYTHONPATH="/path/to/packages:$PYTHONPATH"
+python -c "import engine_pybind"
+```
+
+#### 形式三：`.whl` 包（生产阶段，规划中）
+
+标准 Python wheel 格式 (`pip install`)。当前受限于 wheel 文件名中的下划线解析问题（PEP 427 要求包名中连续的分隔符与 wheel 文件名分隔符 `-` 会产生歧义），建议使用形式一或二。完整的 `.whl` 构建需要引入 `build` + `setuptools` 工具链。
+
+#### 用户侧最终包结构
+
+无论哪种形式，用户最终得到的**单个方案包**长这样：
+
+```
+engine_pybind/                      # 一个标准的 Python 包
+├── __init__.py                     # from ._core import Engine, Scene, ...
+├── _core.cp312-win_amd64.pyd       # 内部 C++ 扩展（平台相关）
+├── _core.pyi                       # 类型存根（IDE 自动补全）
+└── py.typed                        # PEP 561 标记
+```
+
+用户使用方式与纯 Python 库完全一致：
+
+```python
+import engine_pybind
+
+engine = engine_pybind.Engine()
+engine.init('{"app": "my_game"}')
+scene = engine.create_scene("Level1")
+player = scene.create_object("Hero")
+engine.update(0.016)
+engine.shutdown()
+```
+
+### 改进方向（非必需）
 
 | 方向 | 说明 | 优先级 |
 |------|------|--------|
-| **`pip install -e .` 支持** | 通过 `setup.py` / `pyproject.toml` 使包可直接以开发模式安装，无需手动设置 PYTHONPATH | 低 |
-| **Wheel 打包** | 构建可分发的 `.whl` 包，支持 `pip install` | 低 |
-| **CI/CD 矩阵构建** | 多平台 (Windows/macOS/Linux)、多 Python 版本自动构建 | 低 |
-| **API 文档自动生成** | Sphinx + autodoc 从 `.pyi` 自动生成 HTML 文档 | 低 |
-| **符号版本管理** | 为 `.pyd`/`.so` 设置 `SONAME` 和版本符号 | 低 |
+| **Wheel 打包** | 解决下划线命名问题后支持 `pip install` | 低 |
+| **CI/CD 矩阵构建** | 多平台、多 Python 版本自动构建 | 低 |
+| **API 文档自动生成** | Sphinx + autodoc 从 `.pyi` 生成 HTML | 低 |
 
-**结论**：CppPy 在 C++/Python 绑定方案上已达到业界主流成熟度。当前结构 NumPy、PyTorch 也在用，没有本质差距。上述改进方向属于"锦上添花"级别，适合在项目需要对外分发时再实施。
+**结论**：CppPy 在 C++/Python 绑定方案上已达到业界主流成熟度，交付形式完整可用。

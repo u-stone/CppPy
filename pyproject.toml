@@ -1,0 +1,17 @@
+[project]
+name = "cpppy-engine"
+version = "0.1.0"
+description = "C++17 game engine kernel with 5 Python binding schemes"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+authors = [
+    { name = "CppPy Contributors" },
+]
+
+[tool.setuptools.packages.find]
+where = ["dist"]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel>=0.41"]
+build-backend = "setuptools.build_meta"
