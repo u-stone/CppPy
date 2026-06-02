@@ -70,8 +70,8 @@ endif()
 target_link_libraries(engine_cython PRIVATE engine ${Python3_LIBRARIES})
 
 set_target_properties(engine_cython PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/cython"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/cython"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/_build/cython"
+  OUTPUT_NAME "_core_cython"
 )
 ```
 
@@ -87,7 +87,7 @@ engine_cython.cxx (生成的 C++ 代码)
     ├─ 调用 c_api.h 中的 C 函数
     │
     ▼ clang++ / g++
-engine_cython.pyd (Python 可导入的 C 扩展)
+_core.pyd (Python 可导入的 C 扩展，位于 engine_cython/ 包内)
 ```
 
 ## 核心技术细节
@@ -155,7 +155,7 @@ cdef extern from "engine/c_api.h" nogil:
 
 # ① cimport: 导入 .pxd 文件中声明的 C 类型和函数
 from libc.string cimport const_char
-cimport engine_cython   # cimport 导入 .pxd 模块（C 级别导入）
+cimport _core          # cimport 导入 .pxd 模块（C 级别导入）
 
 
 # ② cdef class: 定义 Cython 扩展类型（类似 Python 类，但内部可持有 C 数据）
@@ -327,7 +327,7 @@ Cython 的学习曲线是五种方案中最陡峭的，原因如下：
 ### Python 端使用
 
 ```python
-import engine_cython
+import engine_cython   # 导入包，__init__.py 重导出 _core 中的 API
 
 engine = engine_cython.Engine()
 print(f"[demo] Engine created")
@@ -392,7 +392,7 @@ python scripts/manage.py run --scheme cython
 # 或手动构建
 cd build
 cmake --build . --target engine_cython
-PYTHONPATH="bindings_output/cython" python ../examples/cython/demo.py
+PYTHONPATH="dist/Debug" python ../examples/cython/demo.py
 ```
 
 ## 物理文件与 Python 类型存根 (`.pyi`)
@@ -403,14 +403,15 @@ Cython 绑定编译后产生以下文件：
 
 | 文件 | 说明 |
 |------|------|
-| `engine_cython.pyd` (Windows) / `engine_cython.so` (Linux) | 编译后的 C 扩展模块。Cython 将 `.pyx` + `.pxd` 编译为 `.cxx`，再由 C++ 编译器生成动态链接库 |
-| `engine_cython.pyi` | 类型存根文件，由 `stubgen-pyx` 从 Cython 源码 AST 生成 |
+| `engine_cython/__init__.py` | 包入口，执行 `from ._core import Component, Engine, GameObject, Scene` |
+| `engine_cython/_core.pyd` | 编译后的内部 C 扩展模块。Cython 将 `_core.pyx` + `_core.pxd` 编译为 `_core.cxx`，再由 C++ 编译器生成 |
+| `engine_cython/_core.pyi` | 类型存根文件，由 `stubgen-pyx` 从 Cython 源码 AST 生成 |
 
 Cython 构建过程：`.pyx` → (`cython --cplus -3`) → `.cxx` → (C++ 编译器) → `.pyd`
 
 ### Python 如何发现和加载
 
-Python 通过 `PYTHONPATH` 搜索 `engine_cython.pyd`（或 `.so`），加载后直接提供 `.pyx` 中定义的 Python 类（`cdef class` 声明的类在运行时表现为普通 Python 类）。
+Python 通过 `PYTHONPATH` 搜索到 `engine_cython/` 包目录，执行 `__init__.py`，其中 `from ._core import ...` 通过相对导入找到包内的 `_core.pyd`。
 
 ### 类型存根生成
 

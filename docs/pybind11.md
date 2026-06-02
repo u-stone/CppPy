@@ -53,8 +53,8 @@ target_include_directories(engine_pybind PRIVATE
 )
 
 set_target_properties(engine_pybind PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/pybind11"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/pybind11"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/_build/pybind11"
+  OUTPUT_NAME "_core_pybind11"
 )
 ```
 
@@ -73,7 +73,7 @@ Pybind11 使用 `PYBIND11_MODULE` 宏定义 Python 模块入口：
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(engine_pybind, m) {
+PYBIND11_MODULE(_core, m) {
   m.doc() = "CppPy engine - pybind11 binding";  // Python 模块 __doc__ 属性
   // ... 注册类、函数、属性
 }
@@ -293,7 +293,7 @@ python scripts/manage.py run --scheme pybind11  # 运行 pybind11 demo
 # 或手动执行
 cd build
 cmake --build . --target engine_pybind
-PYTHONPATH="bindings_output/pybind11" python ../examples/pybind11/demo.py
+PYTHONPATH="dist/Debug" python ../examples/pybind11/demo.py
 ```
 
 ## 物理文件与 Python 类型存根 (`.pyi`)
@@ -304,19 +304,21 @@ pybind11 绑定编译后产生以下文件：
 
 | 文件 | 说明 |
 |------|------|
-| `engine_pybind.cp312-win_amd64.pyd` (Windows) / `engine_pybind.cpython-312-x86_64-linux-gnu.so` (Linux) | 编译后的 Python C 扩展模块。这是一个动态链接库，Python `import` 语句通过 CPython 的 `importlib` 加载机制找到并加载它 |
-| `engine_pybind.pyi` | 类型存根文件，由 `pybind11-stubgen` 自动生成 |
+| `engine_pybind/__init__.py` | 包入口，执行 `from ._core import *` 重导出公开 API |
+| `engine_pybind/_core.*.pyd` | 内部 C 扩展模块（以下划线前缀隐藏，用户不应直接导入） |
+| `engine_pybind/_core.pyi` | 类型存根文件，由 `pybind11-stubgen` 自动生成 |
+| `engine_pybind/py.typed` | PEP 561 标记文件 |
 
 ### Python 如何发现和加载 .pyd
 
 Python 的 `import engine_pybind` 按以下顺序搜索模块：
 
 1. `sys.path` 中的目录（包括 `PYTHONPATH` 环境变量指定的路径）
-2. 对于 C 扩展，Python 查找命名模式为 `engine_pybind.*.pyd` 或 `engine_pybind.pyd` 的文件
+2. Python 在 `engine_pybind/` 目录中找到 `__init__.py`，执行其中的 `from ._core import *`，从而找到 `_core.*.pyd`
 
-CppPy 将所有产物输出到 `build/bindings_output/pybind11/<config>/`，通过 `scripts/manage.py run` 自动设置 `PYTHONPATH` 指向该目录。在多配置生成器（Visual Studio / Xcode）下，路径包含配置子目录（如 `Debug/` 或 `Release/`）。
+CppPy 将所有产物输出到 `dist/<config>/engine_pybind/`，通过 `scripts/manage.py run` 自动设置 `PYTHONPATH` 指向 `dist/<config>/`。在多配置生成器（Visual Studio / Xcode）下，`<config>` 为 `Debug` 或 `Release`；单配置生成器下 `dist/` 直接包含包目录。
 
-`manage.py` 中的 `_find_module_dir()` 函数负责探测实际的模块输出目录：
+`manage.py` 中的 `_find_packages_root()` 函数负责探测实际的模块输出目录：
 
 ```python
 def _find_module_dir(scheme):

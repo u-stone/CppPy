@@ -207,8 +207,8 @@ ModuleNotFoundError: No module named '_engine_swig'
 VS / Xcode 等多配置生成器在输出目录下追加配置子目录：
 
 ```
-单配置 (Ninja):    build/bindings_output/pybind11/engine_pybind.pyd
-多配置 (VS):       build/bindings_output/pybind11/Debug/engine_pybind.pyd
+单配置 (Ninja):    dist/Release/engine_pybind/_core.pyd
+多配置 (VS):       dist/Debug/engine_pybind/_core.pyd
 ```
 
 `manage.py run` 的 `PYTHONPATH` 只指向基础目录，找不到模块。此外 SWIG 和 CFFI 的 Python 包装文件（`.py`）被 POST_BUILD 复制到基础目录，而 `.pyd`/`.dll` 在 `Debug/` 子目录，导致 Python 包装文件运行时找不到二进制模块。
@@ -257,14 +257,16 @@ CMake 的 `$<TARGET_FILE_DIR:target>` 生成器表达式在构建时展开为目
 add_custom_command(TARGET engine_swig POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_BINARY_DIR}/engine_swig.py"
-    "${CMAKE_BINARY_DIR}/bindings_output/swig/"  # ❌ 缺少 /Debug
+    "${CMAKE_BINARY_DIR}/bindings_output/swig/"  # ❌ 旧的硬编码路径
 )
 
-# 正确写法
+# 正确写法 —— 使用 $<CONFIG> 确保包目录在 dist/<Config>/ 下
+set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engine_swig")
 add_custom_command(TARGET engine_swig POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_BINARY_DIR}/engine_swig.py"
-    "$<TARGET_FILE_DIR:engine_swig>/"  # ✅ 自动展开到 bindings_output/swig/Debug/
+    "${_pkg}/__init__.py"  # ✅ SWIG 包装器作为 __init__.py
 )
 ```
 

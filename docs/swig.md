@@ -109,8 +109,7 @@ target_include_directories(engine_swig PRIVATE
 
 # 输出配置
 set_target_properties(${SWIG_MODULE_engine_swig_name} PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/swig"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/swig"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bindings_output/_build/swig"
 )
 
 # SWIG 会生成 engine_swig.py（Python 包装）和 _engine_swig.pyd（C 扩展）
@@ -118,7 +117,7 @@ set_target_properties(${SWIG_MODULE_engine_swig_name} PROPERTIES
 add_custom_command(TARGET engine_swig POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_BINARY_DIR}/engine_swig.py"
-    "${CMAKE_BINARY_DIR}/bindings_output/swig/"
+    "$<TARGET_FILE_DIR:engine_swig>/engine_swig/"
 )
 ```
 
@@ -407,7 +406,7 @@ python scripts/manage.py run --scheme swig
 # 或手动构建
 cd build
 cmake --build . --target engine_swig
-PYTHONPATH="bindings_output/swig" python ../examples/swig/demo.py
+PYTHONPATH="dist/Debug" python ../examples/swig/demo.py
 ```
 
 ## 物理文件与 API 文档
@@ -418,16 +417,17 @@ SWIG 方案产生**两个**关键文件：
 
 | 文件 | 类型 | 说明 |
 |------|------|------|
-| `_engine_swig.pyd` (Windows) / `_engine_swig.so` (Linux) | **二进制** C 扩展模块 | SWIG 编译生成的粘合代码，包含实际的 C 函数调用逻辑。以下划线开头表示它是内部实现模块 |
-| `engine_swig.py` | **纯 Python** 包装文件 | SWIG 自动生成的纯 Python 模块，包含函数签名、docstring、类型转换逻辑。**可直接阅读** |
+| `engine_swig/__init__.py` | **纯 Python** 包装文件 | SWIG 生成的 `engine_swig.py` 复制而来，作为包的入口，可直接阅读 |
+| `engine_swig/_engine_swig.pyd` | **二进制** C 扩展模块 | SWIG 编译生成的粘合代码，放在包内以支持 SWIG 4.4 的相对导入 |
+| `engine_swig/py.typed` | PEP 561 标记 | 告知类型检查器此包有类型信息 |
 
 ### Python 如何发现和加载
 
 当用户 `import engine_swig` 时：
 
-1. Python 在 `PYTHONPATH` 中找到 `engine_swig.py`（纯 Python 包装器）
-2. `engine_swig.py` 内部执行 `import _engine_swig`（绝对导入）
-3. Python 在同一目录中找到 `_engine_swig.pyd` 并加载
+1. Python 在 `PYTHONPATH` 中找到 `engine_swig/` 包目录
+2. 执行 `engine_swig/__init__.py`（即 SWIG 生成的包装器代码）
+3. SWIG 4.4+ 检测到自己在包内，使用 `from . import _engine_swig` 相对导入找到包内的 `_engine_swig.pyd` 并加载
 
 因此**两个文件必须在同一目录**。在多配置生成器下，CppPy 使用 `$<TARGET_FILE_DIR:engine_swig>` 生成器表达式确保包装 `.py` 被复制到与 `.pyd` 相同的配置子目录。
 
