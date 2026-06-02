@@ -19,7 +19,7 @@ set_target_properties(_core_nanobind PROPERTIES
   OUTPUT_NAME "_core_nanobind"
 )
 
-set(_pkg "${CMAKE_BINARY_DIR}/bindings_output/$<CONFIG>/engine_nanobind")
+set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engine_nanobind")
 
 add_custom_command(TARGET _core_nanobind POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"

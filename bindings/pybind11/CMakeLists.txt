@@ -21,7 +21,7 @@ set_target_properties(_core_pybind11 PROPERTIES
 )
 
 # Final package location: build/bindings_output/<Config>/engine_pybind/
-set(_pkg "${CMAKE_BINARY_DIR}/bindings_output/$<CONFIG>/engine_pybind")
+set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engine_pybind")
 
 add_custom_command(TARGET _core_pybind11 POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"

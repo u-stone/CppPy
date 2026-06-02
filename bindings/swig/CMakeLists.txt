@@ -44,7 +44,7 @@ set_target_properties(${SWIG_MODULE_engine_swig_name} PROPERTIES
 # SWIG generates engine_swig.py (wrapper) + _engine_swig.pyd (binary).
 # The wrapper does 'import _engine_swig', so the .pyd must live at the
 # same level as the package directory (both under $<CONFIG>/).
-set(_pkg "${CMAKE_BINARY_DIR}/bindings_output/$<CONFIG>/engine_swig")
+set(_pkg "${CMAKE_SOURCE_DIR}/dist/$<CONFIG>/engine_swig")
 
 add_custom_command(TARGET engine_swig POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_pkg}"

@@ -4,11 +4,11 @@
 import os
 import sys
 
-_bindings_root = os.path.join(
-    os.path.dirname(__file__), "..", "..", "build", "bindings_output"
+_dist_root = os.path.join(
+    os.path.dirname(__file__), "..", "..", "dist"
 )
 for _cfg in ("Debug", "Release", ""):
-    _path = os.path.join(_bindings_root, _cfg) if _cfg else _bindings_root
+    _path = os.path.join(_dist_root, _cfg) if _cfg else _dist_root
     if os.path.isdir(_path) and any(
         d.startswith("engine_") and os.path.isdir(os.path.join(_path, d))
         for d in os.listdir(_path)

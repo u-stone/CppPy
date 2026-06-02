@@ -15,7 +15,7 @@ import zipfile
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD_DIR = os.path.join(PROJECT_ROOT, "build")
 VENV_DIR = os.path.join(BUILD_DIR, "venv")
-BINDINGS_OUTPUT = os.path.join(BUILD_DIR, "bindings_output")
+DIST_DIR = os.path.join(PROJECT_ROOT, "dist")
 
 ALL_SCHEMES = ["pybind11", "nanobind", "swig", "cython", "cffi"]
 
@@ -250,7 +250,7 @@ def _find_packages_root():
     """Return the directory containing all engine_* package directories.
 
     With single-config generators (Ninja, Make) the packages land directly in
-    bindings_output/.  Multi-config generators (VS, Xcode) append a
+    dist/.  Multi-config generators (VS, Xcode) append a
     configuration subdirectory (Debug, Release, …).  This helper probes for
     the most likely candidate so PYTHONPATH is set correctly.
 
@@ -258,9 +258,9 @@ def _find_packages_root():
     package (e.g. engine_pybind/__init__.py + _core.pyd).  We look for
     directories named engine_* that contain __init__.py.
     """
-    base = BINDINGS_OUTPUT  # build/bindings_output/
+    base = DIST_DIR  # dist/
 
-    # Single-config: packages are directly in bindings_output/
+    # Single-config: packages are directly in dist/
     try:
         for entry in os.listdir(base):
             if entry.startswith("engine_") and os.path.isdir(os.path.join(base, entry)):

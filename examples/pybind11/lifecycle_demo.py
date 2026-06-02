@@ -6,10 +6,17 @@
 import os
 import sys
 
-_bindings_dir = os.path.join(
-    os.path.dirname(__file__), "..", "..", "build", "bindings_output", "pybind11"
+_dist_root = os.path.join(
+    os.path.dirname(__file__), "..", "..", "dist"
 )
-sys.path.insert(0, _bindings_dir)
+for _cfg in ("Debug", "Release", ""):
+    _path = os.path.join(_dist_root, _cfg) if _cfg else _dist_root
+    if os.path.isdir(_path) and any(
+        d.startswith("engine_") and os.path.isdir(os.path.join(_path, d))
+        for d in os.listdir(_path)
+    ):
+        sys.path.insert(0, _path)
+        break
 
 import engine_pybind
 
