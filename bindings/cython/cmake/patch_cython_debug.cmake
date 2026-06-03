@@ -24,16 +24,20 @@ math(EXPR AFTER_START "${EOL_POS} + 1")
 string(SUBSTRING "${REST}" ${AFTER_START} -1 AFTER)
 
 # Match SWIG 4.4+ behaviour exactly:
-#   - Pre-include <corecrt.h> on MSVC >= 1929 (needed for _invalid_parameter etc.)
-#   - Undef _DEBUG before Python.h
-#   - Restore _DEBUG 1 after Python.h
-set(GUARD_BEFORE
-"#if defined(_DEBUG) && defined(_MSC_VER) && _MSC_VER >= 1929
+#   - Only modify when _DEBUG is actually defined (Debug builds).
+#   - In Release builds, leave the #include "Python.h" untouched.
+#   - Pre-include <corecrt.h> on MSVC >= 1929 before undef _DEBUG.
+#   - Restore _DEBUG 1 after Python.h.
+set(GUARDED
+"#if defined(_DEBUG)
+#if defined(_MSC_VER) && _MSC_VER >= 1929
 # include <corecrt.h>
 #endif
-#undef _DEBUG")
-set(GUARD_AFTER "#define _DEBUG 1")
+#undef _DEBUG
+${INCLUDE_LINE}#define _DEBUG 1
+#else
+${INCLUDE_LINE}#endif")
 
-set(PATCHED "${BEFORE}${GUARD_BEFORE}\n${INCLUDE_LINE}${GUARD_AFTER}\n${AFTER}")
+set(PATCHED "${BEFORE}${GUARDED}\n${AFTER}")
 file(WRITE "${GENERATED_FILE}" "${PATCHED}")
 message(STATUS "Cython: wrapped Python.h with _DEBUG guard in ${GENERATED_FILE}")
