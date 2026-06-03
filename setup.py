@@ -31,6 +31,10 @@ def _find_config():
 
 pkg_root = _find_config()
 
+# setuptools requires package_dir to be relative to setup.py.
+# Convert the absolute path to a relative one.
+rel_pkg_root = os.path.relpath(pkg_root, PROJECT_ROOT)
+
 setup(
     name="cpppy-engine",
     version="0.1.0",
@@ -38,5 +42,5 @@ setup(
     license="MIT",
     python_requires=">=3.8",
     packages=find_packages(where=pkg_root),
-    package_dir={"": pkg_root},
+    package_dir={"": rel_pkg_root},
 )
