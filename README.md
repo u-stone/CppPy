@@ -152,7 +152,7 @@ CppPy/
 
 ## Documentation
 
-Each binding scheme has a detailed technical document in `docs/`:
+Start with the **[comparison](docs/comparison.md)** for a focused side-by-side of how each scheme bridges C++ to Python, then dive into the detailed technical docs:
 
 | Scheme | Document | Topics Covered |
 |--------|----------|----------------|
