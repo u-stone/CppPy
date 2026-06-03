@@ -489,6 +489,16 @@ def _get_includes_for_tidy():
     return includes
 
 
+def cmd_test(args):
+    """Run pytest smoke tests using the venv Python."""
+    python = _get_venv_python() if os.path.exists(_get_venv_python()) else sys.executable
+    result = _run([python, "-m", "pytest", "tests/", "-v"])
+    if result.returncode != 0:
+        print("[test] Some tests FAILED", file=sys.stderr)
+        sys.exit(1)
+    print("[test] All OK")
+
+
 def cmd_tidy(args):
     """Run clang-tidy on engine and binding sources.
 
@@ -711,6 +721,8 @@ def main():
 
     sub.add_parser("tidy", help="Run clang-tidy")
 
+    sub.add_parser("test", help="Run pytest smoke tests")
+
     # Also accept command as first positional for convenience
     args = parser.parse_args()
 
@@ -723,6 +735,7 @@ def main():
         "format": cmd_format,
         "lint": cmd_lint,
         "tidy": cmd_tidy,
+        "test": cmd_test,
     }
     commands[args.command](args)
 
