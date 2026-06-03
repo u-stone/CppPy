@@ -382,6 +382,35 @@ def cmd_package(args):
     print("[package] Done.")
 
 
+def cmd_wheel(args):
+    """Build standard .whl files from pre-compiled dist/ packages."""
+    config = getattr(args, "config", None) or "Release"
+    scheme = args.scheme
+
+    packages_root = os.path.join(DIST_DIR, config) if config else DIST_DIR
+    if not os.path.isdir(packages_root) or not any(
+        d.startswith("engine") for d in os.listdir(packages_root)
+        if os.path.isdir(os.path.join(packages_root, d))
+    ):
+        print("[wheel] No compiled packages found in {}.".format(packages_root), file=sys.stderr)
+        print("[wheel] Run 'build' first.", file=sys.stderr)
+        sys.exit(1)
+
+    print("[wheel] Building wheels from {} ...".format(packages_root))
+    python = _get_venv_python() if os.path.exists(_get_venv_python()) else sys.executable
+    script = os.path.join(PROJECT_ROOT, "scripts", "package_wheel.py")
+    whl_args = [python, script, "--config", config, "--format", "wheel"]
+    if scheme:
+        whl_args += ["--scheme", scheme]
+    else:
+        whl_args.append("--all")
+    result = _run(whl_args)
+    if result.returncode != 0:
+        print("[wheel] FAILED", file=sys.stderr)
+        sys.exit(1)
+    print("[wheel] Done. Install with: pip install dist/<package>-*.whl")
+
+
 def cmd_develop(args):
     """pip install -e . — editable install for development.
 
@@ -713,6 +742,15 @@ def main():
         help="Build configuration to package (default: Release)",
     )
 
+    p_whl = sub.add_parser("wheel", help="Build .whl files for pip install")
+    p_whl.add_argument("--scheme", choices=ALL_SCHEMES, help="Only build wheel for a specific scheme")
+    p_whl.add_argument(
+        "--config",
+        default="Release",
+        choices=["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
+        help="Build configuration (default: Release)",
+    )
+
     sub.add_parser("develop", help="pip install -e . (editable install)")
 
     sub.add_parser("format", help="Auto-format C++ (clang-format) and Python (black)")
@@ -731,6 +769,7 @@ def main():
         "build": cmd_build,
         "run": cmd_run,
         "package": cmd_package,
+        "wheel": cmd_wheel,
         "develop": cmd_develop,
         "format": cmd_format,
         "lint": cmd_lint,
