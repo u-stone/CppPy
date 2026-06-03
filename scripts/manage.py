@@ -486,7 +486,6 @@ def cmd_tidy(args):
 
     source_dirs = [
         os.path.join(PROJECT_ROOT, "engine", "src"),
-        os.path.join(PROJECT_ROOT, "bindings"),
     ]
     cpp_files = []
     for d in source_dirs:
