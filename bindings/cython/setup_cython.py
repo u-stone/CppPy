@@ -6,21 +6,15 @@ from setuptools import setup, Extension
 from Cython.Build import cythonize
 import os
 
-engine_include = os.path.join(
-    os.path.dirname(__file__), "..", "..", "engine", "include"
-)
+engine_include = os.path.join(os.path.dirname(__file__), "..", "..", "engine", "include")
 
 ext = Extension(
     name="engine_cython",
     sources=[
         os.path.join(os.path.dirname(__file__), "src", "cengine.pyx"),
         os.path.join(os.path.dirname(__file__), "src", "cython_cpp_wrap.cpp"),
-        os.path.join(
-            os.path.dirname(__file__), "..", "..", "engine", "src", "facade.cpp"
-        ),
-        os.path.join(
-            os.path.dirname(__file__), "..", "..", "engine", "src", "scene.cpp"
-        ),
+        os.path.join(os.path.dirname(__file__), "..", "..", "engine", "src", "facade.cpp"),
+        os.path.join(os.path.dirname(__file__), "..", "..", "engine", "src", "scene.cpp"),
         os.path.join(
             os.path.dirname(__file__),
             "..",
@@ -45,9 +39,7 @@ ext = Extension(
             "src",
             "thread_pool.cpp",
         ),
-        os.path.join(
-            os.path.dirname(__file__), "..", "..", "engine", "src", "c_api.cpp"
-        ),
+        os.path.join(os.path.dirname(__file__), "..", "..", "engine", "src", "c_api.cpp"),
     ],
     include_dirs=[engine_include],
     language="c++",

@@ -17,8 +17,7 @@ except ImportError:
     for _cfg in ("Debug", "Release", ""):
         _p = os.path.join(_d, _cfg) if _cfg else _d
         if os.path.isdir(_p) and any(
-            e.startswith("engine_") and os.path.isdir(os.path.join(_p, e))
-            for e in os.listdir(_p)
+            e.startswith("engine_") and os.path.isdir(os.path.join(_p, e)) for e in os.listdir(_p)
         ):
             sys.path.insert(0, _p)
             break
@@ -41,8 +40,9 @@ def main():
 
     player = scene.create_object("Player")
     enemy = scene.create_object("Enemy")
-    print(f"[demo] Objects: {player.name()} (id={player.id()}), "
-          f"{enemy.name()} (id={enemy.id()})")
+    print(
+        f"[demo] Objects: {player.name()} (id={player.id()}), " f"{enemy.name()} (id={enemy.id()})"
+    )
 
     player_transform = player.add_transform()
     player_transform.x = 10.0

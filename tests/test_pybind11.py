@@ -6,6 +6,7 @@ import pytest
 @pytest.fixture
 def engine():
     import enginepybind
+
     e = enginepybind.Engine()
     e.init("{}")
     yield e
@@ -14,6 +15,7 @@ def engine():
 
 def test_import():
     import enginepybind
+
     assert hasattr(enginepybind, "Engine")
     assert hasattr(enginepybind, "Scene")
     assert hasattr(enginepybind, "GameObject")
@@ -21,6 +23,7 @@ def test_import():
 
 def test_engine_lifecycle():
     import enginepybind
+
     e = enginepybind.Engine()
     e.init("{}")
     assert e.is_initialized

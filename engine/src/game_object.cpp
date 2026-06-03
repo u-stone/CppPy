@@ -26,19 +26,18 @@ GameObject::~GameObject() {
 void GameObject::RemoveComponent(std::type_index type) {
   std::lock_guard<std::mutex> lock(component_mutex_);
   components_by_type_.erase(type);
-  components_.erase(
-      std::remove_if(components_.begin(), components_.end(),
-                     [&](const std::unique_ptr<Component>& c) {
-                       return std::type_index(typeid(*c)) == type;
-                     }),
-      components_.end());
+  components_.erase(std::remove_if(components_.begin(), components_.end(),
+                                   [&](const std::unique_ptr<Component> &c) {
+                                     return std::type_index(typeid(*c)) == type;
+                                   }),
+                    components_.end());
 }
 
 void GameObject::Update(float dt) {
   std::lock_guard<std::mutex> lock(component_mutex_);
-  std::cout << "  [GameObject] Update '" << name_ << "' (id=" << id_ << ") dt="
-            << dt << std::endl;
-  for (auto& comp : components_) {
+  std::cout << "  [GameObject] Update '" << name_ << "' (id=" << id_
+            << ") dt=" << dt << std::endl;
+  for (auto &comp : components_) {
     if (comp->IsEnabled()) {
       comp->OnUpdate(dt);
     }
@@ -50,4 +49,4 @@ size_t GameObject::ComponentCount() const {
   return components_.size();
 }
 
-}  // namespace engine
+} // namespace engine

@@ -4,14 +4,16 @@
 
 namespace engine {
 
-void EventBus::Unsubscribe(const Subscription& sub) {
-  if (!sub.IsValid()) return;
+void EventBus::Unsubscribe(const Subscription &sub) {
+  if (!sub.IsValid())
+    return;
   std::lock_guard<std::mutex> lock(mutex_);
   auto it = handlers_.find(sub.event_type);
-  if (it == handlers_.end()) return;
-  auto& vec = it->second;
+  if (it == handlers_.end())
+    return;
+  auto &vec = it->second;
   vec.erase(std::remove_if(vec.begin(), vec.end(),
-                           [&](const std::shared_ptr<HandlerBase>& h) {
+                           [&](const std::shared_ptr<HandlerBase> &h) {
                              return h->id == sub.id;
                            }),
             vec.end());
@@ -22,4 +24,4 @@ void EventBus::Clear() {
   handlers_.clear();
 }
 
-}  // namespace engine
+} // namespace engine

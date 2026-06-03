@@ -15,4 +15,4 @@ void __cpp_api_anchor() {
   (void)&GetComponent<AIComponent>;
 }
 
-}  // namespace engine::cpp_api
+} // namespace engine::cpp_api

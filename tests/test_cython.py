@@ -3,11 +3,13 @@
 
 def test_import():
     import enginecython
+
     assert hasattr(enginecython, "Engine")
 
 
 def test_engine_lifecycle():
     import enginecython
+
     e = enginecython.Engine()
     e.init("{}")
     assert e.is_initialized
@@ -17,6 +19,7 @@ def test_engine_lifecycle():
 
 def test_scene_and_object():
     import enginecython
+
     e = enginecython.Engine()
     e.init("{}")
     scene = e.create_scene("Main")
@@ -31,6 +34,7 @@ def test_scene_and_object():
 
 def test_mass_spawn():
     import enginecython
+
     e = enginecython.Engine()
     e.init("{}")
     scene = e.create_scene("Main")

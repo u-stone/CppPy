@@ -12,13 +12,13 @@ namespace engine {
 // Wrap a shared_ptr or unique_ptr; when the owned object is destroyed,
 // all existing Guards become "expired" and callers can check before use.
 class LifecycleGuard {
- public:
+public:
   LifecycleGuard() : alive_(std::make_shared<std::atomic<bool>>(true)) {}
 
-  LifecycleGuard(const LifecycleGuard&) = default;
-  LifecycleGuard& operator=(const LifecycleGuard&) = default;
-  LifecycleGuard(LifecycleGuard&&) = default;
-  LifecycleGuard& operator=(LifecycleGuard&&) = default;
+  LifecycleGuard(const LifecycleGuard &) = default;
+  LifecycleGuard &operator=(const LifecycleGuard &) = default;
+  LifecycleGuard(LifecycleGuard &&) = default;
+  LifecycleGuard &operator=(LifecycleGuard &&) = default;
 
   void Invalidate() { *alive_ = false; }
 
@@ -26,7 +26,7 @@ class LifecycleGuard {
 
   explicit operator bool() const { return IsAlive(); }
 
- private:
+private:
   std::shared_ptr<std::atomic<bool>> alive_;
 };
 
@@ -34,12 +34,12 @@ class LifecycleGuard {
 // The C API hands out opaque handles (void*) which are pointers to RefCounted
 // subclasses. engine_release() calls DecRef() and deletes when count hits zero.
 class RefCounted {
- public:
+public:
   RefCounted() = default;
   virtual ~RefCounted() = default;
 
-  RefCounted(const RefCounted&) = delete;
-  RefCounted& operator=(const RefCounted&) = delete;
+  RefCounted(const RefCounted &) = delete;
+  RefCounted &operator=(const RefCounted &) = delete;
 
   void AddRef() { ref_count_.fetch_add(1, std::memory_order_relaxed); }
 
@@ -53,25 +53,26 @@ class RefCounted {
 
   int RefCount() const { return ref_count_.load(std::memory_order_acquire); }
 
-  LifecycleGuard& Guard() { return guard_; }
+  LifecycleGuard &Guard() { return guard_; }
 
- private:
+private:
   std::atomic<int> ref_count_{1};
   LifecycleGuard guard_;
 };
 
 // Smart handle that holds a RefCounted pointer and manages AddRef/DecRef.
-template <typename T>
-class RefCountedPtr {
- public:
+template <typename T> class RefCountedPtr {
+public:
   RefCountedPtr() : ptr_(nullptr) {}
-  explicit RefCountedPtr(T* ptr) : ptr_(ptr) {
-    if (ptr_) ptr_->AddRef();
+  explicit RefCountedPtr(T *ptr) : ptr_(ptr) {
+    if (ptr_)
+      ptr_->AddRef();
   }
-  RefCountedPtr(const RefCountedPtr& other) : ptr_(other.ptr_) {
-    if (ptr_) ptr_->AddRef();
+  RefCountedPtr(const RefCountedPtr &other) : ptr_(other.ptr_) {
+    if (ptr_)
+      ptr_->AddRef();
   }
-  RefCountedPtr(RefCountedPtr&& other) noexcept : ptr_(other.ptr_) {
+  RefCountedPtr(RefCountedPtr &&other) noexcept : ptr_(other.ptr_) {
     other.ptr_ = nullptr;
   }
   ~RefCountedPtr() {
@@ -80,13 +81,13 @@ class RefCountedPtr {
     }
   }
 
-  RefCountedPtr& operator=(const RefCountedPtr& other) {
+  RefCountedPtr &operator=(const RefCountedPtr &other) {
     if (this != &other) {
       Reset(other.ptr_);
     }
     return *this;
   }
-  RefCountedPtr& operator=(RefCountedPtr&& other) noexcept {
+  RefCountedPtr &operator=(RefCountedPtr &&other) noexcept {
     if (this != &other) {
       Reset(nullptr);
       ptr_ = other.ptr_;
@@ -95,24 +96,25 @@ class RefCountedPtr {
     return *this;
   }
 
-  T* Get() const { return ptr_; }
-  T* operator->() const { return ptr_; }
-  T& operator*() const { return *ptr_; }
+  T *Get() const { return ptr_; }
+  T *operator->() const { return ptr_; }
+  T &operator*() const { return *ptr_; }
   explicit operator bool() const { return ptr_ != nullptr; }
 
-  void Reset(T* new_ptr = nullptr) {
-    T* old = ptr_;
+  void Reset(T *new_ptr = nullptr) {
+    T *old = ptr_;
     ptr_ = new_ptr;
-    if (new_ptr) new_ptr->AddRef();
+    if (new_ptr)
+      new_ptr->AddRef();
     if (old && old->DecRef()) {
       delete old;
     }
   }
 
- private:
-  T* ptr_;
+private:
+  T *ptr_;
 };
 
-}  // namespace engine
+} // namespace engine
 
-#endif  // ENGINE_LIFECYCLE_H_
+#endif // ENGINE_LIFECYCLE_H_

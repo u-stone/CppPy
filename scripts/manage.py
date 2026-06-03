@@ -77,7 +77,9 @@ def _find_vs_generator():
 
     vswhere = os.path.join(
         os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
-        "Microsoft Visual Studio", "Installer", "vswhere.exe",
+        "Microsoft Visual Studio",
+        "Installer",
+        "vswhere.exe",
     )
 
     found_versions = set()
@@ -86,8 +88,7 @@ def _find_vs_generator():
     if os.path.isfile(vswhere):
         try:
             output = subprocess.check_output(
-                [vswhere, "-products", "*",
-                 "-property", "catalog_productLineVersion"],
+                [vswhere, "-products", "*", "-property", "catalog_productLineVersion"],
                 text=True,
             )
             for line in output.strip().splitlines():
@@ -100,9 +101,7 @@ def _find_vs_generator():
     # Fallback: check install directories for each candidate
     if not found_versions:
         prog_files = os.environ.get("ProgramFiles", "C:\\Program Files")
-        prog_files_x86 = os.environ.get(
-            "ProgramFiles(x86)", "C:\\Program Files (x86)"
-        )
+        prog_files_x86 = os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)")
         for year, _gen in _VS_CANDIDATES:
             # VS 2019 and later use %ProgramFiles% regardless of arch
             base = prog_files if year >= "2022" else prog_files_x86
@@ -110,8 +109,11 @@ def _find_vs_generator():
             if os.path.isdir(year_dir):
                 for edition in ("Community", "Professional", "Enterprise"):
                     devenv = os.path.join(
-                        year_dir, edition,
-                        "Common7", "IDE", "devenv.exe",
+                        year_dir,
+                        edition,
+                        "Common7",
+                        "IDE",
+                        "devenv.exe",
                     )
                     if os.path.isfile(devenv):
                         found_versions.add(year)
@@ -185,8 +187,13 @@ def cmd_setup(args):
         is_multi_config = False
 
     cmake_args = [
-        "cmake", "-B", BUILD_DIR, "-S", PROJECT_ROOT,
-        "-G", generator,
+        "cmake",
+        "-B",
+        BUILD_DIR,
+        "-S",
+        PROJECT_ROOT,
+        "-G",
+        generator,
         f"-DPython3_EXECUTABLE={python}",
         f"-DPython_EXECUTABLE={python}",
     ]
@@ -224,8 +231,7 @@ def cmd_setup(args):
 def cmd_build(args):
     """Build all or a specific scheme."""
     if not os.path.exists(os.path.join(BUILD_DIR, "CMakeCache.txt")):
-        print("[build] Build tree not configured. Run 'setup' first.",
-              file=sys.stderr)
+        print("[build] Build tree not configured. Run 'setup' first.", file=sys.stderr)
         sys.exit(1)
 
     # Detect whether this is a multi-config generator (VS, Xcode)
@@ -278,8 +284,7 @@ def _find_packages_root():
             if not os.path.isdir(sub):
                 continue
             for sub_entry in os.listdir(sub):
-                if (sub_entry.startswith("engine")
-                        and os.path.isdir(os.path.join(sub, sub_entry))):
+                if sub_entry.startswith("engine") and os.path.isdir(os.path.join(sub, sub_entry)):
                     pkg_init = os.path.join(sub, sub_entry, "__init__.py")
                     if os.path.isfile(pkg_init):
                         candidates.append((os.path.getmtime(sub), sub))
@@ -342,11 +347,11 @@ def cmd_package(args):
 
     packages_root = os.path.join(DIST_DIR, config) if config else DIST_DIR
     if not os.path.isdir(packages_root) or not any(
-        d.startswith("engine") for d in os.listdir(packages_root)
+        d.startswith("engine")
+        for d in os.listdir(packages_root)
         if os.path.isdir(os.path.join(packages_root, d))
     ):
-        print("[package] No built packages found in {}.".format(packages_root),
-              file=sys.stderr)
+        print("[package] No built packages found in {}.".format(packages_root), file=sys.stderr)
         print("[package] Run 'build' first.", file=sys.stderr)
         sys.exit(1)
 
@@ -372,11 +377,11 @@ def cmd_develop(args):
     python = _get_venv_python() if os.path.exists(_get_venv_python()) else sys.executable
     packages_root = _find_packages_root()
     if not os.path.isdir(packages_root) or not any(
-        d.startswith("engine") for d in os.listdir(packages_root)
+        d.startswith("engine")
+        for d in os.listdir(packages_root)
         if os.path.isdir(os.path.join(packages_root, d))
     ):
-        print("[develop] No compiled packages found. Run 'build' first.",
-              file=sys.stderr)
+        print("[develop] No compiled packages found. Run 'build' first.", file=sys.stderr)
         sys.exit(1)
 
     print("[develop] Running: {} -m pip install -e .".format(python))
@@ -393,7 +398,7 @@ def _run_check(tool_name, base_cmd, files, max_args=50):
     total = len(files)
     failed = False
     for i in range(0, total, max_args):
-        batch = files[i:i + max_args]
+        batch = files[i : i + max_args]
         result = _run(base_cmd + batch)
         if result.returncode != 0:
             failed = True
@@ -407,17 +412,40 @@ def _run_check(tool_name, base_cmd, files, max_args=50):
 
 def cmd_lint(args):
     """Run clang-format, flake8, and black checks."""
+    python = _get_venv_python() if os.path.exists(_get_venv_python()) else sys.executable
+
     print("[lint] Running clang-format check...")
-    cpp_files = _find_files(PROJECT_ROOT, [".cpp", ".h", ".hpp"],
-                            exclude=["build", ".git", "3rdparty"])
+    cpp_files = _find_files(
+        PROJECT_ROOT, [".cpp", ".h", ".hpp"], exclude=["build", ".git", "3rdparty"]
+    )
     _run_check("clang-format", ["clang-format", "--dry-run", "-Werror"], cpp_files)
 
     print("[lint] Running flake8...")
-    py_files = _find_files(PROJECT_ROOT, [".py"], exclude=["build", ".git", "3rdparty"])
-    _run_check("flake8", ["flake8", "--max-line-length=100"], py_files, max_args=100)
+    py_files = _find_files(PROJECT_ROOT, [".py"], exclude=["build", ".git", "3rdparty", "dist"])
+    _run_check("flake8", [python, "-m", "flake8", "--max-line-length=100"], py_files, max_args=100)
 
     print("[lint] Running black check...")
-    _run_check("black", ["black", "--check", "--line-length=100", "-q"], py_files, max_args=100)
+    _run_check(
+        "black",
+        [python, "-m", "black", "--check", "--line-length=100", "-q"],
+        py_files,
+        max_args=100,
+    )
+
+
+def cmd_format(args):
+    """Auto-format C++ (clang-format -i) and Python (black) source files."""
+    python = _get_venv_python() if os.path.exists(_get_venv_python()) else sys.executable
+
+    print("[format] Formatting C++ files with clang-format -i ...")
+    cpp_files = _find_files(
+        PROJECT_ROOT, [".cpp", ".h", ".hpp"], exclude=["build", ".git", "3rdparty"]
+    )
+    _run_check("clang-format", ["clang-format", "-i"], cpp_files)
+
+    print("[format] Formatting Python files with black ...")
+    py_files = _find_files(PROJECT_ROOT, [".py"], exclude=["build", ".git", "3rdparty", "dist"])
+    _run_check("black", [python, "-m", "black", "--line-length=100", "-q"], py_files, max_args=100)
 
 
 def cmd_tidy(args):
@@ -425,8 +453,7 @@ def cmd_tidy(args):
     print("[tidy] Running clang-tidy...")
     compile_db = os.path.join(BUILD_DIR, "compile_commands.json")
     if not os.path.exists(compile_db):
-        print("[tidy] No compile_commands.json — run build first",
-              file=sys.stderr)
+        print("[tidy] No compile_commands.json — run build first", file=sys.stderr)
         sys.exit(1)
 
     source_dirs = [
@@ -485,8 +512,10 @@ def _setup_swig():
         return
 
     if platform.system() != "Windows":
-        print("  [3rdparty] swig: not Windows — install SWIG via your "
-              "system package manager (apt install swig / brew install swig)")
+        print(
+            "  [3rdparty] swig: not Windows — install SWIG via your "
+            "system package manager (apt install swig / brew install swig)"
+        )
         return
 
     zip_path = os.path.join(THIRDPARTY_DIR, "swigwin.zip")
@@ -497,8 +526,7 @@ def _setup_swig():
         urllib.request.urlretrieve(SWIG_WIN_URL, zip_path)
     except Exception as e:
         print(f"  [3rdparty] swig: download FAILED — {e}", file=sys.stderr)
-        print("  [3rdparty] swig: install SWIG manually to "
-              f"{SWIG_INSTALL_DIR}", file=sys.stderr)
+        print("  [3rdparty] swig: install SWIG manually to " f"{SWIG_INSTALL_DIR}", file=sys.stderr)
         return
     print("  [3rdparty] swig: download OK")
 
@@ -533,8 +561,11 @@ def _setup_swig():
     if os.path.isfile(swig_exe):
         print("  [3rdparty] swig: setup OK")
     else:
-        print("  [3rdparty] swig: extraction completed but swig.exe not "
-              "found — check the archive layout", file=sys.stderr)
+        print(
+            "  [3rdparty] swig: extraction completed but swig.exe not "
+            "found — check the archive layout",
+            file=sys.stderr,
+        )
 
 
 def _setup_3rdparty(scheme=None):
@@ -584,44 +615,42 @@ def _find_files(root, extensions, exclude=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="CppPy project manager"
-    )
+    parser = argparse.ArgumentParser(description="CppPy project manager")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_setup = sub.add_parser("setup", help="Configure CMake and install deps")
-    p_setup.add_argument("--scheme", choices=ALL_SCHEMES,
-                         help="Only setup for a specific scheme")
+    p_setup.add_argument("--scheme", choices=ALL_SCHEMES, help="Only setup for a specific scheme")
     p_setup.add_argument(
         "--generator",
         help="CMake generator (e.g. Ninja, 'Visual Studio 17 2022'). "
-             "On Windows, auto-detects the best VS version by default.",
+        "On Windows, auto-detects the best VS version by default.",
     )
 
     p_build = sub.add_parser("build", help="Build the project")
-    p_build.add_argument("--scheme", choices=ALL_SCHEMES,
-                         help="Only build a specific scheme")
-    p_build.add_argument("--parallel", type=int, default=0,
-                         help="Number of parallel build jobs")
+    p_build.add_argument("--scheme", choices=ALL_SCHEMES, help="Only build a specific scheme")
+    p_build.add_argument("--parallel", type=int, default=0, help="Number of parallel build jobs")
     p_build.add_argument(
-        "--config", default="Release",
+        "--config",
+        default="Release",
         choices=["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
-        help="Build configuration (for multi-config generators). "
-             "Default: Release.",
+        help="Build configuration (for multi-config generators). " "Default: Release.",
     )
 
     p_run = sub.add_parser("run", help="Run example scripts")
-    p_run.add_argument("--scheme", choices=ALL_SCHEMES,
-                       help="Only run a specific scheme")
+    p_run.add_argument("--scheme", choices=ALL_SCHEMES, help="Only run a specific scheme")
 
     p_pkg = sub.add_parser("package", help="Build .zip distribution files")
-    p_pkg.add_argument("--scheme", choices=ALL_SCHEMES,
-                       help="Only package a specific scheme")
-    p_pkg.add_argument("--config", default="Release",
-                       choices=["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
-                       help="Build configuration to package (default: Release)")
+    p_pkg.add_argument("--scheme", choices=ALL_SCHEMES, help="Only package a specific scheme")
+    p_pkg.add_argument(
+        "--config",
+        default="Release",
+        choices=["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
+        help="Build configuration to package (default: Release)",
+    )
 
     sub.add_parser("develop", help="pip install -e . (editable install)")
+
+    sub.add_parser("format", help="Auto-format C++ (clang-format) and Python (black)")
 
     sub.add_parser("lint", help="Run clang-format and flake8 checks")
 
@@ -636,6 +665,7 @@ def main():
         "run": cmd_run,
         "package": cmd_package,
         "develop": cmd_develop,
+        "format": cmd_format,
         "lint": cmd_lint,
         "tidy": cmd_tidy,
     }

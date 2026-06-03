@@ -5,7 +5,8 @@ namespace engine {
 ThreadPool::ThreadPool(size_t num_threads) {
   if (num_threads == 0) {
     num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 0) num_threads = 4;
+    if (num_threads == 0)
+      num_threads = 4;
   }
   workers_.reserve(num_threads);
   for (size_t i = 0; i < num_threads; ++i) {
@@ -35,7 +36,7 @@ void ThreadPool::Stop() {
     stop_.store(true, std::memory_order_release);
   }
   condition_.notify_all();
-  for (auto& worker : workers_) {
+  for (auto &worker : workers_) {
     if (worker.joinable()) {
       worker.join();
     }
@@ -49,4 +50,4 @@ ThreadPool::~ThreadPool() {
   }
 }
 
-}  // namespace engine
+} // namespace engine

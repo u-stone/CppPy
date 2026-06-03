@@ -3,11 +3,13 @@
 
 def test_import():
     import enginecffi
+
     assert hasattr(enginecffi, "Engine")
 
 
 def test_engine_lifecycle():
     import enginecffi
+
     e = enginecffi.Engine()
     e.init("{}")
     assert e.is_initialized
@@ -17,6 +19,7 @@ def test_engine_lifecycle():
 
 def test_scene_and_object():
     import enginecffi
+
     e = enginecffi.Engine("{}")
     e.init()
     scene = e.create_scene("Main")
@@ -29,6 +32,7 @@ def test_scene_and_object():
 
 def test_components():
     import enginecffi
+
     e = enginecffi.Engine("{}")
     e.init()
     scene = e.create_scene("Main")

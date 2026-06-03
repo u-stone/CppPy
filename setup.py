@@ -13,21 +13,20 @@ import os
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(PROJECT_ROOT, "dist")
 
+
 # Auto-detect the build configuration directory
 def _find_config():
     try:
         for entry in os.listdir(DIST):
             p = os.path.join(DIST, entry)
             if os.path.isdir(p) and any(
-                f.startswith("engine") for f in os.listdir(p)
-                if os.path.isdir(os.path.join(p, f))
+                f.startswith("engine") for f in os.listdir(p) if os.path.isdir(os.path.join(p, f))
             ):
                 return p
     except OSError:
         pass
-    raise RuntimeError(
-        "No compiled packages found in dist/. Run 'manage.py build' first."
-    )
+    raise RuntimeError("No compiled packages found in dist/. Run 'manage.py build' first.")
+
 
 pkg_root = _find_config()
 

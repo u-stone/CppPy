@@ -15,12 +15,12 @@
 namespace engine {
 
 class ThreadPool {
- public:
+public:
   explicit ThreadPool(size_t num_threads = 0);
   ~ThreadPool();
 
-  ThreadPool(const ThreadPool&) = delete;
-  ThreadPool& operator=(const ThreadPool&) = delete;
+  ThreadPool(const ThreadPool &) = delete;
+  ThreadPool &operator=(const ThreadPool &) = delete;
 
   // Must be called before the destructor to ensure clean shutdown while
   // the calling context (e.g. Python GIL) is still valid.
@@ -29,7 +29,7 @@ class ThreadPool {
   bool IsStopped() const { return stop_.load(std::memory_order_acquire); }
 
   template <typename F, typename... Args>
-  auto Enqueue(F&& f, Args&&... args)
+  auto Enqueue(F &&f, Args &&...args)
       -> std::future<typename std::invoke_result_t<F, Args...>> {
     using ReturnType = typename std::invoke_result_t<F, Args...>;
     auto task = std::make_shared<std::packaged_task<ReturnType()>>(
@@ -48,7 +48,7 @@ class ThreadPool {
 
   size_t WorkerCount() const { return workers_.size(); }
 
- private:
+private:
   std::vector<std::thread> workers_;
   std::queue<std::function<void()>> tasks_;
   std::mutex mutex_;
@@ -56,6 +56,6 @@ class ThreadPool {
   std::atomic<bool> stop_{false};
 };
 
-}  // namespace engine
+} // namespace engine
 
-#endif  // ENGINE_THREAD_POOL_H_
+#endif // ENGINE_THREAD_POOL_H_

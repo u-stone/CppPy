@@ -10,8 +10,7 @@ ffi = FFI()
 
 # Read the C API header
 header_path = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..", "engine", "include",
-    "engine", "c_api.h"
+    os.path.dirname(__file__), "..", "..", "..", "engine", "include", "engine", "c_api.h"
 )
 with open(header_path) as f:
     header_content = f.read()

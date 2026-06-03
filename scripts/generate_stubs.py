@@ -28,11 +28,18 @@ def gen_nanobind(module_dir):
     """Use nanobind's native stub generator (reads __nb_signature__)."""
     # nanobind.stubgen -O expects a directory, not a filename
     # PYTHONPATH must include module_dir so _core.pyd can be imported.
-    result = _run([
-        _python(), "-m", "nanobind.stubgen",
-        "-m", "_core",
-        "-O", module_dir,
-    ], env={**os.environ, "PYTHONPATH": module_dir})
+    result = _run(
+        [
+            _python(),
+            "-m",
+            "nanobind.stubgen",
+            "-m",
+            "_core",
+            "-O",
+            module_dir,
+        ],
+        env={**os.environ, "PYTHONPATH": module_dir},
+    )
     if result.returncode == 0:
         marker = os.path.join(module_dir, "py.typed")
         open(marker, "w").close()
@@ -44,11 +51,17 @@ def gen_nanobind(module_dir):
 # ── pybind11 ──────────────────────────────────────────────────────────────
 def gen_pybind11(module_dir):
     """Generate stubs via pybind11-stubgen (runtime introspection)."""
-    _run([
-        _python(), "-m", "pybind11_stubgen",
-        "_core",
-        "-o", module_dir,
-    ], env={**os.environ, "PYTHONPATH": module_dir})
+    _run(
+        [
+            _python(),
+            "-m",
+            "pybind11_stubgen",
+            "_core",
+            "-o",
+            module_dir,
+        ],
+        env={**os.environ, "PYTHONPATH": module_dir},
+    )
     marker = os.path.join(module_dir, "py.typed")
     open(marker, "w").close()
 
@@ -57,11 +70,16 @@ def gen_pybind11(module_dir):
 def gen_cython(module_dir):
     """Generate stubs from .pyx / .pxd source via stubgen-pyx (AST-based)."""
     cython_src = os.path.join(PROJECT_ROOT, "bindings", "cython", "src")
-    _run([
-        _python(), "-m", "stubgen_pyx",
-        cython_src,
-        "--output-dir", module_dir,
-    ])
+    _run(
+        [
+            _python(),
+            "-m",
+            "stubgen_pyx",
+            cython_src,
+            "--output-dir",
+            module_dir,
+        ]
+    )
     marker = os.path.join(module_dir, "py.typed")
     open(marker, "w").close()
 
@@ -83,15 +101,22 @@ def gen_swig(module_dir):
     if not os.path.exists(stubgen_exe):
         stubgen_exe = os.path.join(os.path.dirname(_python()), "stubgen")
 
-    result = _run([
-        stubgen_exe,
-        "-m", "engineswig",
-        "-o", packages_root,
-    ], env={**os.environ, "PYTHONPATH": packages_root})
+    result = _run(
+        [
+            stubgen_exe,
+            "-m",
+            "engineswig",
+            "-o",
+            packages_root,
+        ],
+        env={**os.environ, "PYTHONPATH": packages_root},
+    )
 
     if result.returncode != 0:
-        print("  [stubs] mypy stubgen failed for SWIG "
-              "(expected — SWIG wrapper uses absolute import)")
+        print(
+            "  [stubs] mypy stubgen failed for SWIG "
+            "(expected — SWIG wrapper uses absolute import)"
+        )
         print("  [stubs] Instead, read engineswig/__init__.py or use help(engineswig).")
 
     marker = os.path.join(module_dir, "py.typed")
@@ -108,6 +133,7 @@ def gen_cffi(module_dir):
     """
     src = os.path.join(PROJECT_ROOT, "bindings", "cffi", "python", "cffi_bridge.pyi")
     import shutil
+
     dst = os.path.join(module_dir, "cffi_bridge.pyi")
     shutil.copyfile(src, dst)
     marker = os.path.join(module_dir, "py.typed")
@@ -128,8 +154,9 @@ GENERATORS = {
 def main():
     parser = argparse.ArgumentParser(description="Generate .pyi stubs for CppPy bindings")
     parser.add_argument("--scheme", required=True, choices=list(GENERATORS) + ["all"])
-    parser.add_argument("--module-dir", required=True,
-                        help="Directory containing the built .pyd/.so/.dll")
+    parser.add_argument(
+        "--module-dir", required=True, help="Directory containing the built .pyd/.so/.dll"
+    )
     args = parser.parse_args()
 
     module_dir = os.path.abspath(args.module_dir)

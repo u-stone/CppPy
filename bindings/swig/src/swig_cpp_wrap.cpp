@@ -14,14 +14,14 @@
 // SWIG wraps c_api.h but we provide these as additional typed helpers.
 namespace engine_swig {
 
-void PrintEngineInfo(engine::EngineFacade& engine) {
+void PrintEngineInfo(engine::EngineFacade &engine) {
   std::cout << "[SWIG] Engine initialized: " << engine.IsInitialized()
             << std::endl;
   auto names = engine.SceneNames();
   std::cout << "[SWIG] Scenes: " << names.size() << std::endl;
-  for (const auto& n : names) {
+  for (const auto &n : names) {
     std::cout << "[SWIG]   - " << n << std::endl;
   }
 }
 
-}  // namespace engine_swig
+} // namespace engine_swig

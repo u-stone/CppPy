@@ -12,28 +12,28 @@
 namespace engine {
 
 class EngineFacade {
- public:
+public:
   EngineFacade();
   ~EngineFacade();
 
-  EngineFacade(const EngineFacade&) = delete;
-  EngineFacade& operator=(const EngineFacade&) = delete;
+  EngineFacade(const EngineFacade &) = delete;
+  EngineFacade &operator=(const EngineFacade &) = delete;
 
-  bool Init(const std::string& config_json);
+  bool Init(const std::string &config_json);
   void Shutdown();
 
-  std::shared_ptr<Scene> CreateScene(const std::string& name);
-  std::shared_ptr<Scene> GetScene(const std::string& name) const;
+  std::shared_ptr<Scene> CreateScene(const std::string &name);
+  std::shared_ptr<Scene> GetScene(const std::string &name) const;
   std::vector<std::string> SceneNames() const;
 
   void Update(float dt);
 
-  EventBus& GetEventBus() { return event_bus_; }
-  ThreadPool& GetThreadPool() { return thread_pool_; }
+  EventBus &GetEventBus() { return event_bus_; }
+  ThreadPool &GetThreadPool() { return thread_pool_; }
 
   bool IsInitialized() const { return initialized_; }
 
- private:
+private:
   bool initialized_ = false;
   bool shutting_down_ = false;
 
@@ -44,6 +44,6 @@ class EngineFacade {
   std::vector<std::shared_ptr<Scene>> scenes_;
 };
 
-}  // namespace engine
+} // namespace engine
 
-#endif  // ENGINE_FACADE_H_
+#endif // ENGINE_FACADE_H_

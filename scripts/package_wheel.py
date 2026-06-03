@@ -21,9 +21,9 @@ DIST_DIR = os.path.join(PROJECT_ROOT, "dist")
 PACKAGE_META = {
     "pybind11": "enginepybind",
     "nanobind": "enginenanobind",
-    "swig":     "engineswig",
-    "cython":   "enginecython",
-    "cffi":     "enginecffi",
+    "swig": "engineswig",
+    "cython": "enginecython",
+    "cffi": "enginecffi",
 }
 
 VERSION = "0.1.0"
@@ -43,6 +43,7 @@ def package_scheme(scheme, config, fmt="zip"):
 
         # Use make_archive for reliable zip creation
         import tempfile
+
         tmp = tempfile.mkdtemp()
         try:
             tmp_pkg = os.path.join(tmp, pkg_name)

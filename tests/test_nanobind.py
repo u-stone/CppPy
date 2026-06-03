@@ -5,12 +5,14 @@ import pytest
 
 def test_import():
     import enginenanobind
+
     assert hasattr(enginenanobind, "Engine")
     assert hasattr(enginenanobind, "Scene")
 
 
 def test_engine_lifecycle():
     import enginenanobind
+
     e = enginenanobind.Engine()
     e.init("{}")
     assert e.is_initialized
@@ -20,6 +22,7 @@ def test_engine_lifecycle():
 
 def test_create_scene():
     import enginenanobind
+
     e = enginenanobind.Engine()
     e.init("{}")
     scene = e.create_scene("Main")
@@ -29,6 +32,7 @@ def test_create_scene():
 
 def test_object_and_components():
     import enginenanobind
+
     e = enginenanobind.Engine()
     e.init("{}")
     scene = e.create_scene("Main")

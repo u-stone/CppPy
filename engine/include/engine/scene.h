@@ -11,16 +11,16 @@
 namespace engine {
 
 class Scene {
- public:
+public:
   explicit Scene(std::string name);
   ~Scene() = default;
 
-  Scene(const Scene&) = delete;
-  Scene& operator=(const Scene&) = delete;
+  Scene(const Scene &) = delete;
+  Scene &operator=(const Scene &) = delete;
 
-  const std::string& Name() const { return name_; }
+  const std::string &Name() const { return name_; }
 
-  std::shared_ptr<GameObject> CreateObject(const std::string& name);
+  std::shared_ptr<GameObject> CreateObject(const std::string &name);
   void RemoveObject(GameObjectId id);
   std::shared_ptr<GameObject> FindObject(GameObjectId id) const;
 
@@ -30,12 +30,12 @@ class Scene {
 
   std::vector<std::shared_ptr<GameObject>> AllObjects() const;
 
- private:
+private:
   std::string name_;
   mutable std::mutex mutex_;
   std::vector<std::shared_ptr<GameObject>> objects_;
 };
 
-}  // namespace engine
+} // namespace engine
 
-#endif  // ENGINE_SCENE_H_
+#endif // ENGINE_SCENE_H_
