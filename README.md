@@ -26,7 +26,7 @@ python scripts/manage.py develop
 
 # 4. Run demos + tests
 python scripts/manage.py run
-python -m pytest tests/
+python scripts/manage.py test
 
 # 5. Format, lint, tidy
 python scripts/manage.py format    # auto-fix formatting
@@ -78,6 +78,7 @@ python scripts/manage.py run --scheme pybind11
 | `format` | Auto-format C++ (clang-format) + Python (black) |
 | `lint` | Check formatting (clang-format, flake8, black) |
 | `tidy` | Static analysis (clang-tidy) |
+| `test` | Run pytest smoke tests (22 tests) |
 
 ## Requirements
 

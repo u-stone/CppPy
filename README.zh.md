@@ -26,7 +26,7 @@ python scripts/manage.py develop
 
 # 4. 运行示例 + 测试
 python scripts/manage.py run
-python -m pytest tests/
+python scripts/manage.py test
 
 # 5. 格式化、检查、静态分析
 python scripts/manage.py format    # 自动格式化
@@ -78,6 +78,7 @@ python scripts/manage.py run --scheme pybind11
 | `format` | 自动格式化 C++（clang-format）和 Python（black） |
 | `lint` | 格式检查（clang-format、flake8、black） |
 | `tidy` | 静态分析（clang-tidy） |
+| `test` | 运行 pytest 冒烟测试（22 项） |
 
 ## 环境要求
 
