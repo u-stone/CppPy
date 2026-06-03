@@ -21,48 +21,34 @@ python scripts/manage.py setup
 # 2. 编译所有绑定方案（C++ 引擎 + 5 个 Python 包 → dist/）
 python scripts/manage.py build
 
-# 3. 运行所有示例（自动设置 PYTHONPATH 指向 dist/）
+# 3. 可编辑安装 — 然后从任意目录 import
+python scripts/manage.py develop
+
+# 4. 运行示例 + 测试
 python scripts/manage.py run
+python -m pytest tests/
 
-# 4. 代码检查
-python scripts/manage.py lint
-python scripts/manage.py tidy
+# 5. 格式化、检查、静态分析
+python scripts/manage.py format    # 自动格式化
+python scripts/manage.py lint      # 格式检查
+python scripts/manage.py tidy      # 静态分析
 ```
 
-编译完成后，`dist/Debug/`（或 `dist/Release/`）包含 5 个自包含的 Python 包：
-
-```
-dist/Debug/
-├── enginepybind/      # import enginepybind
-├── enginenanobind/    # import enginenanobind
-├── engineswig/        # import engineswig
-├── enginecython/      # import enginecython
-└── enginecffi/        # import enginecffi
-```
-
-每个包都是标准的 Python 模块 — `__init__.py` 公开接口 + 内部 `_core` C 扩展 + `.pyi` 类型存根。
+编译完成后，`dist/Debug/` 包含 5 个自包含的 Python 包。每个包都是标准的 Python 模块 — `__init__.py` 公开接口 + 内部 `_core` C 扩展 + `.pyi` 类型存根。
 
 ## 可编辑安装（开发推荐）
 
 ```bash
-# 构建完成后，安装为可编辑模式 — 无需 PYTHONPATH
-python scripts/manage.py develop
-# 或: pip install -e .
+python scripts/manage.py develop           # = pip install -e .
+# 现在从任意目录都可导入：
+python -c "import enginepybind; print(enginepybind.Engine())"
 ```
 
-此后可以从**任意目录**直接导入，无需设置 PYTHONPATH：
-
-```python
->>> import enginepybind
->>> engine = enginepybind.Engine()
->>> engine.init('{"app":"demo"}')
-```
-
-## 通过 PYTHONPATH 使用（备选）
+## 通过 PYTHONPATH 使用（备选，无需安装）
 
 ```bash
-PYTHONPATH=dist/Debug python     # Linux / macOS
-$env:PYTHONPATH="dist\Debug"; python  # Windows PowerShell
+PYTHONPATH=dist/Debug python               # Linux / macOS
+$env:PYTHONPATH="dist\Debug"; python        # Windows PowerShell
 ```
 
 ## 打包分发
@@ -80,6 +66,19 @@ python scripts/manage.py build --scheme pybind11
 python scripts/manage.py run --scheme pybind11
 ```
 
+## 全部命令
+
+| 命令 | 说明 |
+|------|------|
+| `setup` | 创建 venv，安装依赖，cmake 配置 |
+| `build` | 编译 C++ 引擎和全部绑定方案 → `dist/` |
+| `run` | 运行所有示例脚本 |
+| `develop` | `pip install -e .` — 可编辑安装 |
+| `package` | 将 `dist/` 打包为 `.zip` 分发包 |
+| `format` | 自动格式化 C++（clang-format）和 Python（black） |
+| `lint` | 格式检查（clang-format、flake8、black） |
+| `tidy` | 静态分析（clang-tidy） |
+
 ## 环境要求
 
 - CMake >= 3.20
@@ -96,7 +95,7 @@ CppPy/
 ├── engine/          # 共享 C++17 游戏引擎（静态库）
 │   ├── include/     # 头文件：facade, scene, game_object, event_bus 等
 │   └── src/         # 实现文件
-├── bindings/        # 每种绑定方案一个子目录
+├── bindings/        # 每种绑定方案一个子目录 + python/__init__.py 包入口
 │   ├── pybind11/
 │   ├── nanobind/
 │   ├── swig/

@@ -18,15 +18,20 @@ A technical verification project comparing 5 approaches for bridging a C++17 gam
 # 1. Setup (create venv, install deps, configure CMake)
 python scripts/manage.py setup
 
-# 2. Build all bindings (compiles C++ engine + 5 Python packages to dist/)
+# 2. Build all bindings (C++ engine + 5 Python packages → dist/)
 python scripts/manage.py build
 
-# 3. Run all demos (automatically sets PYTHONPATH to dist/)
-python scripts/manage.py run
+# 3. Editable install — then import from anywhere
+python scripts/manage.py develop
 
-# 4. Lint & tidy
-python scripts/manage.py lint
-python scripts/manage.py tidy
+# 4. Run demos + tests
+python scripts/manage.py run
+python -m pytest tests/
+
+# 5. Format, lint, tidy
+python scripts/manage.py format    # auto-fix formatting
+python scripts/manage.py lint      # check formatting
+python scripts/manage.py tidy      # static analysis
 ```
 
 After building, `dist/Debug/` contains 5 self-contained Python packages. Each is a standard Python package with `__init__.py` + internal `_core` C extension + `.pyi` stubs.
@@ -34,25 +39,16 @@ After building, `dist/Debug/` contains 5 self-contained Python packages. Each is
 ## Editable Install (recommended for development)
 
 ```bash
-# After build, install in editable mode — no PYTHONPATH needed
-python scripts/manage.py develop
-# Or: pip install -e .
+python scripts/manage.py develop           # = pip install -e .
+# Now import from any directory:
+python -c "import enginepybind; print(enginepybind.Engine())"
 ```
 
-Now you can import from **any directory** without setting PYTHONPATH:
-
-```python
->>> import enginepybind
->>> engine = enginepybind.Engine()
->>> engine.init('{"app":"demo"}')
-```
-
-## Using via PYTHONPATH (alternative)
+## Using via PYTHONPATH (alternative, no install needed)
 
 ```bash
-# Without editable install — set PYTHONPATH manually
-PYTHONPATH=dist/Debug python       # Linux / macOS
-$env:PYTHONPATH="dist\Debug"; python  # Windows PowerShell
+PYTHONPATH=dist/Debug python               # Linux / macOS
+$env:PYTHONPATH="dist\Debug"; python        # Windows PowerShell
 ```
 
 ## Packaging for Distribution
@@ -69,6 +65,19 @@ python scripts/manage.py setup --scheme pybind11
 python scripts/manage.py build --scheme pybind11
 python scripts/manage.py run --scheme pybind11
 ```
+
+## All Commands
+
+| Command | Description |
+|---------|-------------|
+| `setup` | Create venv, install deps, cmake configure |
+| `build` | Compile C++ engine + all bindings → `dist/` |
+| `run` | Execute all demo scripts |
+| `develop` | `pip install -e .` — editable install |
+| `package` | Create `.zip` archives from `dist/` |
+| `format` | Auto-format C++ (clang-format) + Python (black) |
+| `lint` | Check formatting (clang-format, flake8, black) |
+| `tidy` | Static analysis (clang-tidy) |
 
 ## Requirements
 
@@ -87,15 +96,17 @@ CppPy/
 │   ├── include/     # Headers: facade, scene, game_object, event_bus, etc.
 │   └── src/         # Implementations
 ├── bindings/        # One subdirectory per binding scheme
-│   ├── pybind11/
+│   ├── pybind11/    #   + python/__init__.py  (package facade)
 │   ├── nanobind/
 │   ├── swig/
 │   ├── cython/
 │   └── cffi/
 ├── examples/        # Demo scripts for each scheme
-├── scripts/         # manage.py orchestration
-├── cmake/           # CMake helper modules
-└── tools/           # .clang-format, .clang-tidy
+├── tests/           # pytest smoke tests (22 tests across 5 schemes)
+├── scripts/         # manage.py orchestration + stubs/wheel helpers
+├── dist/            # Build output — self-contained Python packages
+├── docs/            # Technical documentation per scheme
+└── tools/           # .clang-format, .clang-tidy, cpp-python-bindings.skill
 ```
 
 ## Engine API Layers
