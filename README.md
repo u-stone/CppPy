@@ -80,12 +80,43 @@ After `manage.py develop`, VS Code only needs one setting — the Python interpr
 
 Press `F5` or use the Run and Debug panel (Ctrl+Shift+D).
 
-## Packaging for Distribution
+## Distribution — Getting Packages to Users
+
+Three ways to distribute, from most to least standard:
+
+### 1. Wheel (`pip install`) — recommended for production
+
+Build standard `.whl` files and install with `pip install`:
+
+```bash
+# Build wheels for all 5 schemes
+python scripts/manage.py wheel --config Release
+
+# Or build one
+python scripts/manage.py wheel --scheme pybind11 --config Release
+
+# Install (dist/enginepybind-0.1.0-py3-none-any.whl, etc.)
+pip install dist/enginepybind-0.1.0-*.whl
+```
+
+The wheel contains `__init__.py`, `_core.pyd`, `_core.pyi`, and `py.typed` — everything needed. After install, `import enginepybind` works globally, no PYTHONPATH needed. This is the standard Python packaging format used by NumPy, PyTorch, etc.
+
+### 2. Editable Install (`pip install -e .`) — recommended for development
+
+```bash
+python scripts/manage.py develop
+# = pip install -e .
+```
+
+Creates an egg-link in `venv/site-packages/` pointing to `dist/Debug/`. Import works from any directory. Rebuild with `manage.py build` to update.
+
+### 3. Zip archive — quick distribution
 
 ```bash
 python scripts/manage.py package --config Release
-# Output: dist/enginepybind-0.1.0.zip, dist/enginenanobind-0.1.0.zip, ...
+# Output: dist/enginepybind-0.1.0.zip, ...
 ```
+Unzip and add to PYTHONPATH.
 
 ## Build a Single Scheme
 
@@ -104,6 +135,7 @@ python scripts/manage.py run --scheme pybind11
 | `run` | Execute all demo scripts |
 | `develop` | `pip install -e .` — editable install |
 | `package` | Create `.zip` archives from `dist/` |
+| `wheel` | Build standard `.whl` for `pip install` |
 | `format` | Auto-format C++ (clang-format) + Python (black) |
 | `lint` | Check formatting (clang-format, flake8, black) |
 | `tidy` | Static analysis (clang-tidy) |

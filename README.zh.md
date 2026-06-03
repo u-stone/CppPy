@@ -80,12 +80,43 @@ $env:PYTHONPATH="dist\Debug"; python        # Windows PowerShell
 
 按 `F5` 或使用左侧"运行和调试"面板（Ctrl+Shift+D）。
 
-## 打包分发
+## 分发 — 把包交给用户
+
+三种方式，从最标准到最简单：
+
+### 1. Wheel (`pip install`) — 生产推荐
+
+构建标准 `.whl` 文件，通过 `pip install` 安装：
+
+```bash
+# 构建全部 5 个 wheel
+python scripts/manage.py wheel --config Release
+
+# 或构建单个
+python scripts/manage.py wheel --scheme pybind11 --config Release
+
+# 安装（dist/enginepybind-0.1.0-py3-none-any.whl 等）
+pip install dist/enginepybind-0.1.0-*.whl
+```
+
+Wheel 包含 `__init__.py`、`_core.pyd`、`_core.pyi`、`py.typed`。安装后 `import enginepybind` 全局可用，无需 PYTHONPATH。这是 NumPy、PyTorch 等项目的标准打包格式。
+
+### 2. 可编辑安装 (`pip install -e .`) — 开发推荐
+
+```bash
+python scripts/manage.py develop
+# = pip install -e .
+```
+
+在 `venv/site-packages/` 中创建 egg-link → 指向 `dist/Debug/`。从任意目录 import。重新编译 `manage.py build` 即可更新。
+
+### 3. Zip 压缩包 — 快速分发
 
 ```bash
 python scripts/manage.py package --config Release
 # 产物: dist/enginepybind-0.1.0.zip 等
 ```
+解压后加入 PYTHONPATH 使用。
 
 ## 构建单个方案
 
@@ -104,6 +135,7 @@ python scripts/manage.py run --scheme pybind11
 | `run` | 运行所有示例脚本 |
 | `develop` | `pip install -e .` — 可编辑安装 |
 | `package` | 将 `dist/` 打包为 `.zip` 分发包 |
+| `wheel` | 构建标准 `.whl` 用于 `pip install` |
 | `format` | 自动格式化 C++（clang-format）和 Python（black） |
 | `lint` | 格式检查（clang-format、flake8、black） |
 | `tidy` | 静态分析（clang-tidy） |
