@@ -506,13 +506,17 @@ def cmd_tidy(args):
         for inc in _get_includes_for_tidy():
             extra_args += ["-I" + inc]
         extra_args.append("-D_DEBUG")
-        # Use --extra-arg to inject compiler flags (works with all clang-tidy versions)
-        base_cmd = ["clang-tidy"]
+        # Sensible defaults: modern C++ checks, no clang-analyzer (slow on Windows)
+        checks = (
+            "modernize-*,performance-*,readability-*,"
+            "bugprone-*,-clang-analyzer-*"
+        )
+        base_cmd = ["clang-tidy", "--checks=" + checks]
         for a in extra_args:
             base_cmd += ["--extra-arg", a]
 
     print("[tidy] Checking {} files...".format(len(cpp_files)))
-    _run_check("clang-tidy", base_cmd, cpp_files)
+    _run_check("clang-tidy", base_cmd, cpp_files, max_args=1)
 
 
 THIRDPARTY_DIR = os.path.join(PROJECT_ROOT, "3rdparty")
