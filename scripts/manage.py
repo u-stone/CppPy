@@ -227,6 +227,19 @@ def cmd_setup(args):
         print("[setup] CMake configure FAILED", file=sys.stderr)
         sys.exit(1)
     print("[setup] CMake configure OK")
+    _print_venv_activation()
+
+
+def _print_venv_activation():
+    """Print the command to activate the venv in the user's shell."""
+    if platform.system() == "Windows":
+        activate = r"build\venv\Scripts\activate"
+        print("\n  To activate the venv, run:")
+        print(f"    {activate}         # CMD")
+        print(f"    {activate}.ps1     # PowerShell")
+    else:
+        print("\n  To activate the venv, run:")
+        print("    source build/venv/bin/activate")
 
 
 def cmd_build(args):
