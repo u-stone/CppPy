@@ -13,7 +13,6 @@ Usage:
 import argparse
 import os
 import shutil
-import sys
 from pathlib import Path
 
 PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
@@ -41,7 +40,6 @@ def package_scheme(scheme, config, fmt="zip"):
 
     if fmt == "zip":
         out = os.path.join(DIST_DIR, f"{pkg_name}-{VERSION}.zip")
-        base = os.path.dirname(src)
 
         # Use make_archive for reliable zip creation
         import tempfile
@@ -85,7 +83,7 @@ def main():
     for s in schemes:
         name = PACKAGE_META[s]
         print(f"\n=== {name} ({s}) ===")
-        result = package_scheme(s, args.config, args.format)
+        package_scheme(s, args.config, args.format)
 
 
 if __name__ == "__main__":

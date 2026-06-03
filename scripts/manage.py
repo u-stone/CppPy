@@ -388,38 +388,36 @@ def cmd_develop(args):
     print("[develop] Done. Packages are now importable from anywhere.")
 
 
+def _run_check(tool_name, base_cmd, files, max_args=50):
+    """Run a lint tool on files in batches to avoid Windows cmdline length limit."""
+    total = len(files)
+    failed = False
+    for i in range(0, total, max_args):
+        batch = files[i:i + max_args]
+        result = _run(base_cmd + batch)
+        if result.returncode != 0:
+            failed = True
+    if total == 0:
+        print("[lint] {}: no files to check".format(tool_name))
+    elif failed:
+        print("[lint] {} found issues".format(tool_name), file=sys.stderr)
+    else:
+        print("[lint] {} OK ({} files)".format(tool_name, total))
+
+
 def cmd_lint(args):
-    """Run clang-format and flake8 checks."""
+    """Run clang-format, flake8, and black checks."""
     print("[lint] Running clang-format check...")
     cpp_files = _find_files(PROJECT_ROOT, [".cpp", ".h", ".hpp"],
-                            exclude=["build", ".git"])
-    if cpp_files:
-        result = _run(["clang-format", "--dry-run", "-Werror"] + cpp_files)
-        if result.returncode != 0:
-            print("[lint] clang-format found style violations", file=sys.stderr)
-        else:
-            print("[lint] clang-format OK")
-    else:
-        print("[lint] No C++ files found")
+                            exclude=["build", ".git", "3rdparty"])
+    _run_check("clang-format", ["clang-format", "--dry-run", "-Werror"], cpp_files)
 
     print("[lint] Running flake8...")
-    py_files = _find_files(PROJECT_ROOT, [".py"], exclude=["build", ".git"])
-    if py_files:
-        result = _run(["flake8", "--max-line-length=100"] + py_files)
-        if result.returncode != 0:
-            print("[lint] flake8 found issues", file=sys.stderr)
-        else:
-            print("[lint] flake8 OK")
-    else:
-        print("[lint] No Python files found")
+    py_files = _find_files(PROJECT_ROOT, [".py"], exclude=["build", ".git", "3rdparty"])
+    _run_check("flake8", ["flake8", "--max-line-length=100"], py_files, max_args=100)
 
     print("[lint] Running black check...")
-    if py_files:
-        result = _run(["black", "--check", "--line-length=100"] + py_files)
-        if result.returncode != 0:
-            print("[lint] black found formatting issues", file=sys.stderr)
-        else:
-            print("[lint] black OK")
+    _run_check("black", ["black", "--check", "--line-length=100", "-q"], py_files, max_args=100)
 
 
 def cmd_tidy(args):
@@ -494,7 +492,7 @@ def _setup_swig():
     zip_path = os.path.join(THIRDPARTY_DIR, "swigwin.zip")
 
     # Download
-    print(f"  [3rdparty] swig: downloading swigwin-4.4.0.zip (~12 MB) ...")
+    print("  [3rdparty] swig: downloading swigwin-4.4.0.zip (~12 MB) ...")
     try:
         urllib.request.urlretrieve(SWIG_WIN_URL, zip_path)
     except Exception as e:

@@ -90,7 +90,8 @@ def gen_swig(module_dir):
     ], env={**os.environ, "PYTHONPATH": packages_root})
 
     if result.returncode != 0:
-        print("  [stubs] mypy stubgen failed for SWIG (expected — SWIG wrapper uses absolute import)")
+        print("  [stubs] mypy stubgen failed for SWIG "
+              "(expected — SWIG wrapper uses absolute import)")
         print("  [stubs] Instead, read engineswig/__init__.py or use help(engineswig).")
 
     marker = os.path.join(module_dir, "py.typed")
