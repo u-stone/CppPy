@@ -24,9 +24,14 @@ python scripts/manage.py build
 # 3. Editable install — then import from anywhere
 python scripts/manage.py develop
 
-# 4. Run demos + tests
+# 4. Run demos + tests (no venv activation needed)
 python scripts/manage.py run
-python scripts/manage.py test
+python scripts/manage.py test          # = pytest tests/ -v
+
+# Or with venv activated:
+# build\venv\Scripts\activate          # Windows
+# source build/venv/bin/activate       # Linux/macOS
+# python -m pytest tests/ -v
 
 # 5. Format, lint, tidy
 python scripts/manage.py format    # auto-fix formatting

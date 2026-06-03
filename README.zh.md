@@ -24,9 +24,14 @@ python scripts/manage.py build
 # 3. 可编辑安装 — 然后从任意目录 import
 python scripts/manage.py develop
 
-# 4. 运行示例 + 测试
+# 4. 运行示例 + 测试（无需激活 venv）
 python scripts/manage.py run
-python scripts/manage.py test
+python scripts/manage.py test          # = pytest tests/ -v
+
+# 或者先激活 venv：
+# build\venv\Scripts\activate          # Windows
+# source build/venv/bin/activate       # Linux/macOS
+# python -m pytest tests/ -v
 
 # 5. 格式化、检查、静态分析
 python scripts/manage.py format    # 自动格式化
