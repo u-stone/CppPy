@@ -1,0 +1,27 @@
+{
+    // ── Python 解释器 ──────────────────────────────────────────────────
+    // 必须设置 — 指向项目 venv。执行 manage.py develop 后，所有包
+    // 通过 pip install -e . 注册到该 venv 的 site-packages，Pylance
+    // 自动发现，无需配置 extraPaths 或 PYTHONPATH。
+    "python.defaultInterpreterPath": "${workspaceFolder}/build/venv/Scripts/python.exe",
+
+    // ── 如果不使用 pip install -e .（仅靠 PYTHONPATH），取消下面的注释 ─
+    // "python.analysis.extraPaths": [
+    //     "${workspaceFolder}/dist/Debug"
+    // ],
+    // "terminal.integrated.env.windows": {
+    //     "PYTHONPATH": "${workspaceFolder}\\dist\\Debug;${env:PYTHONPATH}"
+    // },
+
+    // ── 排除构建产物搜索 ───────────────────────────────────────────────
+    "search.exclude": {
+        "build/**": true,
+        "dist/**": true,
+        "3rdparty/**": true
+    },
+    "files.watcherExclude": {
+        "build/**": true,
+        "dist/**": true,
+        "3rdparty/**": true
+    }
+}
