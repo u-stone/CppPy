@@ -14,9 +14,9 @@ build/
 
 # IDE / Editor
 .idea/
-.vscode/launch.json
-.vscode/tasks.json
-!.vscode/settings.json        # 项目共享配置（提交），其他 .vscode/ 文件不提交
+.vscode/*
+!.vscode/settings.json        # 解释器选择
+!.vscode/launch.json          # 调试配置
 *.swp
 *.swo
 

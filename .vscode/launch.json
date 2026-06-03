@@ -1,0 +1,45 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/build/venv/Scripts/python.exe",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Demo Script",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/build/venv/Scripts/python.exe",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "pytest: Current Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["${file}", "-v", "--no-header"],
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/build/venv/Scripts/python.exe",
+            "justMyCode": false
+        },
+        {
+            "name": "pytest: All Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/", "-v"],
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/build/venv/Scripts/python.exe",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        }
+    ]
+}

@@ -56,6 +56,30 @@ PYTHONPATH=dist/Debug python               # Linux / macOS
 $env:PYTHONPATH="dist\Debug"; python        # Windows PowerShell
 ```
 
+## VS Code Setup
+
+After `manage.py develop`, VS Code only needs one setting — the Python interpreter path (already in `.vscode/settings.json`):
+
+```json
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/build/venv/Scripts/python.exe"
+}
+```
+
+**Why this is enough:**
+
+1. `pip install -e .` creates an egg-link in `venv/site-packages/` pointing to `dist/Debug/`
+2. VS Code (Pylance) uses the selected interpreter's `site-packages` to resolve imports
+3. `.pyi` stub files in the package provide type information for autocomplete and go-to-definition
+4. No need for `python.analysis.extraPaths` or terminal `PYTHONPATH`
+
+**Debugging:** `.vscode/launch.json` includes pre-configured debug profiles:
+- `Python: Current File` — run/debug the active editor file
+- `pytest: Current Test` — debug a single test function
+- `pytest: All Tests` — debug the full test suite
+
+Press `F5` or use the Run and Debug panel (Ctrl+Shift+D).
+
 ## Packaging for Distribution
 
 ```bash

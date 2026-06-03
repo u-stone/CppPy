@@ -56,6 +56,30 @@ PYTHONPATH=dist/Debug python               # Linux / macOS
 $env:PYTHONPATH="dist\Debug"; python        # Windows PowerShell
 ```
 
+## VS Code 设置
+
+执行 `manage.py develop` 后，VS Code 只需一项配置——Python 解释器路径（已在 `.vscode/settings.json` 中）：
+
+```json
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/build/venv/Scripts/python.exe"
+}
+```
+
+**原理**：
+
+1. `pip install -e .` 在 `venv/site-packages/` 中创建 egg-link → 指向 `dist/Debug/`
+2. VS Code（Pylance）使用选中解释器的 `site-packages` 解析 import
+3. 包内的 `.pyi` 存根文件提供类型信息，实现自动补全和跳转定义
+4. **不需要** `python.analysis.extraPaths`，**不需要**终端 `PYTHONPATH`
+
+**调试**：`.vscode/launch.json` 预置了调试配置：
+- `Python: Current File` — 运行/调试当前编辑的文件
+- `pytest: Current Test` — 调试单个测试函数
+- `pytest: All Tests` — 调试全部测试
+
+按 `F5` 或使用左侧"运行和调试"面板（Ctrl+Shift+D）。
+
 ## 打包分发
 
 ```bash
