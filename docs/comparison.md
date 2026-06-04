@@ -159,7 +159,7 @@ Python: engine.update(0.016)
 |------|------|----------|
 | `__init__.py` | `bindings/pybind11/python/__init__.py` | CMake POST_BUILD 复制 |
 | `_core.*.pyd` | `bindings/pybind11/src/pybind11_bindings.cpp` | pybind11 头文件 + C++ 编译器 → 单个 `.pyd` |
-| `_core.pyi` | 运行时自省 `_core.pyd` | `pybind11-stubgen` 读取 docstring → 生成 `.pyi` |
+| `_core.pyi` | 运行时自省 `_core.pyd` | `pybind11-stubgen`（独立工具）→ import 模块 → 读取 `help()`/`__doc__` → 推断参数和返回类型 → 生成 `.pyi` |
 | `py.typed` | — | `generate_stubs.py` 创建空文件（PEP 561） |
 
 **核心流程**：手写 C++ → 编译器 → `.pyd`（打包所有 C++ 代码）。`.pyi` 由工具从已编译的 `.pyd` 内省生成。

@@ -376,18 +376,22 @@ def _find_module_dir(scheme):
 
 ### 类型存根生成
 
-pybind11 无原生 `.pyi` 支持，使用第三方工具 `pybind11-stubgen`：
+**什么是 `pybind11-stubgen`**：一个命令行工具，它 **import 已编译的 `.pyd` 模块**，通过 Python 内省机制（`dir()` / `help()` / `__doc__`）读取所有类、方法、参数名和 docstring，然后生成 `.pyi` 类型存根文件。它不解析 C++ 源码——它是纯 Python 运行时工具。
 
 ```bash
 pip install pybind11-stubgen
 pybind11-stubgen enginepybind -o <output_dir>/
+#   └─ import enginepybind（需要 .pyd 在 PYTHONPATH 中）
+#       └─ 遍历所有类和函数
+#           └─ 从 docstring 推断参数和返回类型
+#               └─ 写入 enginepybind.pyi
 ```
 
-在 CppPy 中，存根生成作为 CMake POST_BUILD 步骤自动执行（参见 `bindings/pybind11/CMakeLists.txt`），由 `scripts/generate_stubs.py` 调度。
+> **注意**：`pybind11-stubgen` 必须在**能 import 模块**的环境中运行——也就是说 PYTHONPATH 必须包含 `.pyd` 所在目录。在 CppPy 中，`scripts/generate_stubs.py` 会在调用 stubgen 前自动设置 PYTHONPATH。
 
-**生成质量**：`pybind11-stubgen` 基于运行时自省（`help()` / docstring 解析），对纯 Python 类型（`int`, `str`, `bool`）准确率较高，但对 C++ 模板类型（如 `engine::Scene`, `std::shared_ptr<engine::GameObject>`）会退化为 `...`（Ellipsis）。这是因为 pybind11 生成的 docstring 中包含 C++ 原始类型名，stubgen 无法将其映射回 Python 类型。
-
-**改进建议**：在 pybind11 绑定代码中为每个 `py::class_` 添加 `py::doc()` 提供自定义 docstring，避免 C++ 类型名泄露到 Python 端。
+**生成质量**：`pybind11-stubgen` 从 docstring 推断类型。如果 docstring 包含 C++ 类型名（`engine::Scene`），stubgen 无法映射到 Python 类型，就输出 `...`（Ellipsis）。CppPy 通过两个手段解决此问题：
+1. `py::options::disable_function_signatures()` —— 禁止 pybind11 自动生成含 C++ 类型名的 docstring
+2. 每个绑定方法添加 `py::doc("method(param: str) -> ReturnType")` —— 用纯 Python 类型签名覆盖
 
 ### 用户可见效果
 
