@@ -370,18 +370,26 @@ Python 通过 `PYTHONPATH` 搜索到 `enginenanobind/` 包目录，执行 `__ini
 
 ### 类型存根生成（原生支持）
 
-nanobind 是所有 5 种方案中**唯一内置原生 `.pyi` 生成的方案**。它不依赖第三方工具或启发式推断——而是直接读取绑定时注册的结构化 `__nb_signature__` 信息：
+**什么是 `nanobind.stubgen`**：nanobind 内置的 `.pyi` 生成工具。和 `pybind11-stubgen` 一样，它也通过 **import 已编译的 `.pyd` 模块** 进行运行时自省。但关键区别在于数据源：
+
+- `pybind11-stubgen`：解析 docstring 文本（字符串）→ 启发式推断类型 → 容易出错
+- `nanobind.stubgen`：读取 `__nb_signature__` 属性（结构化数据）→ 直接获得精确类型 → **无推断、无歧义**
+
+`__nb_signature__` 是 nanobind 在绑定时自动写入每个函数/方法的元数据。它包含参数名、类型、默认值、返回类型等结构化信息，不依赖文本解析。
 
 ```bash
 python -m nanobind.stubgen -m enginenanobind -O <output_dir>/
+#   └─ import enginenanobind（需要 .pyd 在 PYTHONPATH 中）
+#       └─ 遍历所有类和函数
+#           └─ 读取 __nb_signature__（结构化签名数据）
+#               └─ 直接写入 enginenanobind.pyi
 ```
 
-在 CppPy 中通过 `scripts/generate_stubs.py` 调用：
+在 CppPy 中由 `scripts/generate_stubs.py` 调用：
 ```python
-# nanobind.stubgen 读取 __nb_signature__，无需启发式推断
 subprocess.run([python, "-m", "nanobind.stubgen",
-    "-m", "enginenanobind",
-    "-O", module_dir])
+    "-m", "_core", "-O", module_dir],
+    env={**os.environ, "PYTHONPATH": module_dir})
 ```
 
 **生成质量对比**：

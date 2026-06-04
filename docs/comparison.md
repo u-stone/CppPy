@@ -170,7 +170,7 @@ Python: engine.update(0.016)
 |------|------|----------|
 | `__init__.py` | `bindings/nanobind/python/__init__.py` | CMake POST_BUILD 复制 |
 | `_core.*.pyd` | `bindings/nanobind/src/nanobind_bindings.cpp` | nanobind 头文件 + C++ 编译器 → 单个 `.pyd` |
-| `_core.pyi` | 运行时自省 `_core.pyd` | `nanobind.stubgen`（内置，精度最高） |
+| `_core.pyi` | 运行时自省 `_core.pyd` | `nanobind.stubgen`（内置）→ import 模块 → 读 `__nb_signature__`（结构化签名，非 docstring 文本）→ 生成 `.pyi`，精度最高 |
 | `py.typed` | — | `generate_stubs.py` 创建 |
 
 **核心流程**：与 pybind11 相同，但 `.pyi` 生成更精准（读 `__nb_signature__` 而非解析 docstring）。
