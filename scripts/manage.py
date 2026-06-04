@@ -43,7 +43,15 @@ PYTHON_REQUIREMENTS = [
 
 def _get_venv_python():
     if platform.system() == "Windows":
-        return os.path.join(VENV_DIR, "Scripts", "python.exe")
+        # try standard python.exe path
+        default_path = os.path.join(VENV_DIR, "Scripts", "python.exe")
+        if os.path.exists(default_path):
+            return default_path
+        # if python.exe does not exist（Python 3.14 venv spec）,falling back to python3.exe
+        alt_path = os.path.join(VENV_DIR, "Scripts", "python3.exe")
+        if os.path.exists(alt_path):
+            return alt_path
+        return default_path # not exist either, return default_path
     return os.path.join(VENV_DIR, "bin", "python")
 
 
