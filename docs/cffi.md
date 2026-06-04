@@ -624,13 +624,13 @@ python scripts/manage.py package --scheme cffi --config Release
 
 CFFI/ctypes 方案的产物结构与其他 4 种方案有本质区别——它不生成 Python C 扩展模块，而是：
 
-| 文件 | 类型 | 说明 |
+| 文件 | 说明 | 来源 |
 |------|------|------|
-| `enginecffi/__init__.py` | 包入口，执行 `from .cffi_bridge import Component, Engine, GameObject, Scene` |
-| `enginecffi/cffi_bridge.py` | **纯 Python 代码** | 手写的 Pythonic OOP 包装器，通过 `ctypes.CDLL()` 加载 `engine_c.dll` |
-| `enginecffi/cffi_bridge.pyi` | **手写类型存根** | 手工维护的 `.pyi` 文件 |
-| `enginecffi/engine_c.dll` | **纯 C 共享库** | 编译自 `cffi_c_impl.cpp`，只使用 `extern "C"` ABI |
-| `enginecffi/py.typed` | PEP 561 标记 | 告知类型检查器此包有类型信息 |
+| `__init__.py` | 包入口，执行 `from .cffi_bridge import ...` | `bindings/cffi/python/__init__.py`（手写）→ CMake POST_BUILD 复制 |
+| `cffi_bridge.py` | 纯 Python OOP 包装器（ctypes.CDLL） | `bindings/cffi/python/cffi_bridge.py`（手写）→ CMake POST_BUILD 复制 |
+| `cffi_bridge.pyi` | 手写类型存根 | `bindings/cffi/python/cffi_bridge.pyi`（手写）→ CMake POST_BUILD 复制 |
+| `engine_c.dll` | 纯 C 共享库（非 Python 扩展） | `bindings/cffi/src/cffi_c_impl.cpp` → C++ 编译器 → 普通 DLL |
+| `py.typed` | PEP 561 标记 | `generate_stubs.py` 创建空文件 |
 
 ### Python 如何发现和加载
 

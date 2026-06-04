@@ -343,12 +343,12 @@ python scripts/manage.py package --scheme pybind11 --config Release
 
 pybind11 绑定编译后产生以下文件：
 
-| 文件 | 说明 |
-|------|------|
-| `enginepybind/__init__.py` | 包入口，执行 `from ._core import *` 重导出公开 API |
-| `enginepybind/_core.*.pyd` | 内部 C 扩展模块（以下划线前缀隐藏，用户不应直接导入） |
-| `enginepybind/_core.pyi` | 类型存根文件，由 `pybind11-stubgen` 自动生成 |
-| `enginepybind/py.typed` | PEP 561 标记文件 |
+| 文件 | 说明 | 来源 |
+|------|------|------|
+| `__init__.py` | 包入口，执行 `from ._core import *` 重导出公开 API | `bindings/pybind11/python/__init__.py`（手写）→ CMake POST_BUILD 复制 |
+| `_core.*.pyd` | 内部 C 扩展（以下划线前缀隐藏） | `bindings/pybind11/src/pybind11_bindings.cpp` → pybind11 头文件 + C++ 编译器 → 单个 `.pyd` |
+| `_core.pyi` | 类型存根 | `pybind11-stubgen` 运行时自省 `_core.pyd` → 自动生成 |
+| `py.typed` | PEP 561 标记 | `generate_stubs.py` 创建空文件 |
 
 ### Python 如何发现和加载 .pyd
 

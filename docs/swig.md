@@ -443,11 +443,11 @@ python scripts/manage.py package --scheme swig --config Release
 
 SWIG 方案产生**两个**关键文件：
 
-| 文件 | 类型 | 说明 |
+| 文件 | 说明 | 来源 |
 |------|------|------|
-| `engineswig/__init__.py` | **纯 Python** 包装文件 | SWIG 生成的 `engineswig.py` 复制而来，作为包的入口，可直接阅读 |
-| `engineswig/_engineswig.pyd` | **二进制** C 扩展模块 | SWIG 编译生成的粘合代码，放在包内以支持 SWIG 4.4 的相对导入 |
-| `engineswig/py.typed` | PEP 561 标记 | 告知类型检查器此包有类型信息 |
+| `__init__.py` | 包入口，可直接阅读的纯 Python | `.i` 接口文件 → SWIG 解析 → 生成 `engine_swig.py` → CMake POST_BUILD 复制并重命名 |
+| `_engine_swig.pyd` | 二进制 C 扩展（粘合代码） | `.i` 接口文件 + C 头文件 → SWIG 生成 `enginePYTHON_wrap.cxx` → C++ 编译器 → `.pyd` |
+| `py.typed` | PEP 561 标记 | `generate_stubs.py` 创建空文件 |
 
 ### Python 如何发现和加载
 

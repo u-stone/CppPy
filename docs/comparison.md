@@ -149,6 +149,65 @@ Python: engine.update(0.016)
 
 **独特之处**：这是唯一**不需要 C++ 编译器来生成绑定**的方案。Python 侧的桥接代码是纯 Python（ctypes 是标准库）。代价是类型声明全部手动（`argtypes`、`restype`），且不支持 C++ 特性（模板、重载、类继承）。
 
+## 产物文件来源
+
+最终 `dist/Debug/enginepybind/` 目录下每个文件的"出身"：
+
+### pybind11
+
+| 文件 | 来源 | 生成方式 |
+|------|------|----------|
+| `__init__.py` | `bindings/pybind11/python/__init__.py` | CMake POST_BUILD 复制 |
+| `_core.*.pyd` | `bindings/pybind11/src/pybind11_bindings.cpp` | pybind11 头文件 + C++ 编译器 → 单个 `.pyd` |
+| `_core.pyi` | 运行时自省 `_core.pyd` | `pybind11-stubgen` 读取 docstring → 生成 `.pyi` |
+| `py.typed` | — | `generate_stubs.py` 创建空文件（PEP 561） |
+
+**核心流程**：手写 C++ → 编译器 → `.pyd`（打包所有 C++ 代码）。`.pyi` 由工具从已编译的 `.pyd` 内省生成。
+
+### nanobind
+
+| 文件 | 来源 | 生成方式 |
+|------|------|----------|
+| `__init__.py` | `bindings/nanobind/python/__init__.py` | CMake POST_BUILD 复制 |
+| `_core.*.pyd` | `bindings/nanobind/src/nanobind_bindings.cpp` | nanobind 头文件 + C++ 编译器 → 单个 `.pyd` |
+| `_core.pyi` | 运行时自省 `_core.pyd` | `nanobind.stubgen`（内置，精度最高） |
+| `py.typed` | — | `generate_stubs.py` 创建 |
+
+**核心流程**：与 pybind11 相同，但 `.pyi` 生成更精准（读 `__nb_signature__` 而非解析 docstring）。
+
+### SWIG
+
+| 文件 | 来源 | 生成方式 |
+|------|------|----------|
+| `__init__.py` | SWIG 生成的 `engine_swig.py` | SWIG 解析 `.i` → 生成 `.py`（纯 Python 包装代码）；CMake 复制为 `__init__.py` |
+| `_engine_swig.pyd` | SWIG 生成的 `enginePYTHON_wrap.cxx` | SWIG 解析 `.i` + C 头文件 → 生成 `.cxx` → C++ 编译器 → `.pyd` |
+| `py.typed` | — | `generate_stubs.py` 创建 |
+
+**核心流程**：接口文件 `.i` → SWIG → 两个产物（`.py` + `.cxx`）→ `.py` 用作包入口，`.cxx` 编译为 `.pyd`。`.py` 本身可读、可 debug。
+
+### Cython
+
+| 文件 | 来源 | 生成方式 |
+|------|------|----------|
+| `__init__.py` | `bindings/cython/python/__init__.py` | CMake POST_BUILD 复制 |
+| `_core.pyd` | `_core.pyx` + `_core.pxd` | Cython 编译器 → `_core.cxx` → C++ 编译器 → `.pyd` |
+| `_core.pyi` | `_core.pyx` AST 解析 | `stubgen-pyx` 解析 `.pyx` 语法树 → 生成 `.pyi` |
+| `py.typed` | — | `generate_stubs.py` 创建 |
+
+**核心流程**：手写 `.pyx`（Python 超集）→ Cython → `.cxx` → 编译器 → `.pyd`。`.pyi` 从 `.pyx` 源码生成（非运行时）。
+
+### CFFI / ctypes
+
+| 文件 | 来源 | 生成方式 |
+|------|------|----------|
+| `__init__.py` | `bindings/cffi/python/__init__.py` | CMake POST_BUILD 复制 |
+| `cffi_bridge.py` | `bindings/cffi/python/cffi_bridge.py` | 手写，CMake 复制 |
+| `engine_c.dll` | `bindings/cffi/src/cffi_c_impl.cpp` | C++ 编译器 → 纯 C 共享库（非 Python 扩展） |
+| `cffi_bridge.pyi` | `bindings/cffi/python/cffi_bridge.pyi` | 手写，CMake 复制 |
+| `py.typed` | — | `generate_stubs.py` 创建 |
+
+**核心流程**：C++ → 纯 C DLL + Python 手写包装代码。**唯一不需要"绑定工具"的方案**——`ctypes` 是标准库，`.pyi` 也是手写。每个文件来源都是明确的源码文件，无代码生成。
+
 ## 该选哪个
 
 | 场景 | 推荐 |

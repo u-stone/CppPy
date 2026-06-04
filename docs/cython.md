@@ -427,11 +427,12 @@ python scripts/manage.py package --scheme cython --config Release
 
 Cython 绑定编译后产生以下文件：
 
-| 文件 | 说明 |
-|------|------|
-| `enginecython/__init__.py` | 包入口，执行 `from ._core import Component, Engine, GameObject, Scene` |
-| `enginecython/_core.pyd` | 编译后的内部 C 扩展模块。Cython 将 `_core.pyx` + `_core.pxd` 编译为 `_core.cxx`，再由 C++ 编译器生成 |
-| `enginecython/_core.pyi` | 类型存根文件，由 `stubgen-pyx` 从 Cython 源码 AST 生成 |
+| 文件 | 说明 | 来源 |
+|------|------|------|
+| `__init__.py` | 包入口，执行 `from ._core import ...` | `bindings/cython/python/__init__.py`（手写）→ CMake POST_BUILD 复制 |
+| `_core.pyd` | 内部 C 扩展 | `_core.pyx` + `_core.pxd` → Cython 编译器 → `_core.cxx` → C++ 编译器 → `.pyd` |
+| `_core.pyi` | 类型存根 | `stubgen-pyx` 解析 `.pyx` AST → 生成 `.pyi` |
+| `py.typed` | PEP 561 标记 | `generate_stubs.py` 创建空文件 |
 
 Cython 构建过程：`.pyx` → (`cython --cplus -3`) → `.cxx` → (C++ 编译器) → `.pyd`
 

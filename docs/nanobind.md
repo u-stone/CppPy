@@ -357,12 +357,12 @@ python scripts/manage.py package --scheme nanobind --config Release
 
 nanobind 绑定编译后产生以下文件：
 
-| 文件 | 说明 |
-|------|------|
-| `enginenanobind/__init__.py` | 包入口，执行 `from ._core import *` 重导出公开 API |
-| `enginenanobind/_core.*.pyd` | 内部 C 扩展模块（以下划线前缀隐藏） |
-| `enginenanobind/_core.pyi` | **原生**类型存根，由 nanobind 内置的 `nanobind.stubgen` 生成 |
-| `enginenanobind/py.typed` | PEP 561 标记文件 |
+| 文件 | 说明 | 来源 |
+|------|------|------|
+| `__init__.py` | 包入口，执行 `from ._core import *` 重导出公开 API | `bindings/nanobind/python/__init__.py`（手写）→ CMake POST_BUILD 复制 |
+| `_core.*.pyd` | 内部 C 扩展（以下划线前缀隐藏） | `bindings/nanobind/src/nanobind_bindings.cpp` → nanobind 头文件 + C++ 编译器 → 单个 `.pyd` |
+| `_core.pyi` | **原生**类型存根，精度最高 | `nanobind.stubgen` 运行时读取 `__nb_signature__` → 自动生成 |
+| `py.typed` | PEP 561 标记 | `generate_stubs.py` 创建空文件 |
 
 ### Python 如何发现和加载 .pyd
 
