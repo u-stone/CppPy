@@ -149,6 +149,46 @@ Python: engine.update(0.016)
 
 **独特之处**：这是唯一**不需要 C++ 编译器来生成绑定**的方案。Python 侧的桥接代码是纯 Python（ctypes 是标准库）。代价是类型声明全部手动（`argtypes`、`restype`），且不支持 C++ 特性（模板、重载、类继承）。
 
+### CPython C API — 一切方案的基石
+
+CPython C API（也称 Python/C API）是 Python 解释器本身暴露的 C 语言接口。**它不是一种"可选方案"——它是所有其他方案的编译目标**。无论你用 pybind11、nanobind、Cython 还是 SWIG，编译器最终生成的代码都在调用 `PyArg_ParseTuple`、`Py_BuildValue`、`PyLong_FromLong` 这些 C 函数。
+
+直接手写 CPython C API 代码来创建扩展模块是完全可行的，但极其冗长。对比一下完成同一件事的代码量：
+
+**pybind11（3 行）**：
+```cpp
+py::class_<Engine>(m, "Engine")
+    .def(py::init<>())
+    .def("update", &Engine::Update, py::arg("dt"));
+```
+
+**底层 CPython C API（30+ 行）**：
+```c
+// 定义一个 Python 类型需要手写: PyTypeObject 结构体、tp_methods 数组、
+// PyMethodDef、tp_init、tp_new、tp_dealloc、成员变量访问器...
+// 每个方法还要手写 PyArg_ParseTuple 解析参数、Py_BuildValue 构造返回值
+
+static PyObject* Engine_update(PyObject* self, PyObject* args) {
+    float dt;
+    if (!PyArg_ParseTuple(args, "f", &dt)) return NULL;
+    Engine* engine = ((EngineObject*)self)->ptr;
+    engine->Update(dt);
+    Py_RETURN_NONE;
+}
+```
+
+**所有方案最终都编译为 CPython C API 调用**。差异在于你是在哪个抽象层编写代码：
+
+| 方案 | 抽象层 | 类比 |
+|------|--------|------|
+| **CPython C API（手写）** | 底层 C 宏和结构体 | 手写汇编 |
+| **pybind11 / nanobind** | C++ 模板元编程 | Rust/C++ 的零成本抽象 |
+| **Cython** | Python 超集语言 | 语法糖编译器 |
+| **SWIG** | 接口描述语言 | 代码生成器 |
+| **CFFI / ctypes** | Python 运行时 FFI | 动态链接 + 反射 |
+
+CppPy 没有单独实现手写 CPython C API 方案，因为它是 pybind11/nanobind/Cython/SWIG 的"编译产物"，不是并列方案。
+
 ## 产物文件来源
 
 最终 `dist/Debug/enginepybind/` 目录下每个文件的"出身"：
